@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Server, ChevronDown, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Server, ChevronDown, ChevronRight, Globe } from 'lucide-react';
 import './App.css';
 
 // Mock data for the sidebar navigation
@@ -15,11 +15,31 @@ const navigationData = [
         title: 'Gateway API',
         icon: <Server size={18} />,
         path: '/gateway-api',
-        iframeUrl: import.meta.env.DEV ? 'http://localhost:5174/' : '/prototypes/gatewayapi/'
+        getIframeUrl: (lang: string) =>
+          import.meta.env.DEV
+            ? `http://localhost:5174/?lang=${lang}`
+            : `/prototypes/gatewayapi/?lang=${lang}`
       }
     ]
   }
 ];
+
+const portalI18n = {
+  zh: {
+    selectModule: '请在左侧选择一个功能模块',
+    breadcrumbHome: '原型门户',
+    language: '语言',
+    chinese: '中文',
+    english: 'English',
+  },
+  en: {
+    selectModule: 'Please select a module from the sidebar',
+    breadcrumbHome: 'Prototype Portal',
+    language: 'Language',
+    chinese: '中文',
+    english: 'English',
+  },
+};
 
 function Sidebar() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ kpanda: true });
@@ -74,31 +94,36 @@ function Sidebar() {
   );
 }
 
-function IframeViewer({ url }: { url: string }) {
+function IframeViewer({ url, lang }: { url: string; lang: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const t = portalI18n[lang as keyof typeof portalI18n] || portalI18n.zh;
+
   if (!url) {
     return (
       <div className="empty-state">
-        <h2>请在左侧选择一个功能模块</h2>
+        <h2>{t.selectModule}</h2>
       </div>
     );
   }
 
   return (
     <div className="iframe-container">
-      <iframe src={url} title="Prototype Viewer" className="content-iframe" />
+      <iframe ref={iframeRef} src={url} title="Prototype Viewer" className="content-iframe" />
     </div>
   );
 }
 
-function AppLayout() {
+function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
   const location = useLocation();
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const t = portalI18n[lang as keyof typeof portalI18n] || portalI18n.zh;
   
   // Find matching URL for iframe
   let currentIframeUrl = '';
   navigationData.forEach(prod => {
     prod.children.forEach(feat => {
       if (feat.path === location.pathname) {
-        currentIframeUrl = feat.iframeUrl;
+        currentIframeUrl = feat.getIframeUrl(lang);
       }
     });
   });
@@ -109,17 +134,39 @@ function AppLayout() {
       <div className="main-content">
         <div className="top-header">
           <div className="breadcrumb-simple">
-             {/* Simple dynamic breadcrumb based on current path */}
-             {location.pathname === '/gateway-api' ? 'Kpanda / Gateway API' : '原型门户'}
+             {location.pathname === '/gateway-api' ? 'Kpanda / Gateway API' : t.breadcrumbHome}
           </div>
-          <div className="user-profile">
-            <div className="avatar">A</div>
-            <span>Admin</span>
+          <div className="user-profile-area">
+            <div className="user-profile" onClick={() => setShowLangMenu(!showLangMenu)}>
+              <div className="avatar">A</div>
+              <span>Admin</span>
+              <ChevronDown size={14} />
+            </div>
+            {showLangMenu && (
+              <div className="lang-dropdown">
+                <div className="lang-dropdown-title">
+                  <Globe size={14} />
+                  <span>{t.language}</span>
+                </div>
+                <div
+                  className={`lang-option ${lang === 'zh' ? 'active' : ''}`}
+                  onClick={() => { setLang('zh'); setShowLangMenu(false); }}
+                >
+                  {t.chinese}
+                </div>
+                <div
+                  className={`lang-option ${lang === 'en' ? 'active' : ''}`}
+                  onClick={() => { setLang('en'); setShowLangMenu(false); }}
+                >
+                  {t.english}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <Routes>
-          <Route path="/" element={<IframeViewer url="" />} />
-          <Route path="/gateway-api" element={<IframeViewer url={currentIframeUrl} />} />
+          <Route path="/" element={<IframeViewer url="" lang={lang} />} />
+          <Route path="/gateway-api" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
         </Routes>
       </div>
     </div>
@@ -127,9 +174,11 @@ function AppLayout() {
 }
 
 function App() {
+  const [lang, setLang] = useState('zh');
+
   return (
     <BrowserRouter>
-      <AppLayout />
+      <AppLayout lang={lang} setLang={setLang} />
     </BrowserRouter>
   );
 }

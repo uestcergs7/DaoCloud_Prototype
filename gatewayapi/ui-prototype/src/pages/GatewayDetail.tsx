@@ -1,33 +1,36 @@
 import { Header } from '../components/Header';
 import { BasicInfoCard } from '../components/BasicInfoCard';
 import { TabsCard } from '../components/TabsCard';
+import { useI18n } from '../I18nContext';
 
 export default function GatewayDetail() {
+  const t = useI18n();
+
   const basicInfo = [
-    { label: '名称', value: 'test-gw' },
-    { label: '状态', value: '正常', status: 'success' as const },
-    { label: '别名', value: '-' },
-    { label: 'GatewayClass', value: 'envoy-gateway' },
-    { label: '命名空间', value: 'bs-system' },
-    { label: '创建时间', value: '2026-01-18 23:32' }
+    { label: t.gateway.name, value: 'test-gw' },
+    { label: t.gateway.status, value: '正常', status: 'success' as const },
+    { label: t.gateway.alias, value: '-' },
+    { label: t.gateway.gatewayClass, value: 'envoy-gateway' },
+    { label: t.gateway.namespace, value: 'bs-system' },
+    { label: t.gateway.createdAt, value: '2026-01-18 23:32' }
   ];
 
   const tabs = [
     {
       key: 'listeners',
-      title: '监听端口 (Listeners)',
+      title: t.gateway.listeners,
       content: (
         <table className="content-table">
           <thead>
             <tr>
-              <th>名称</th>
-              <th>端口</th>
-              <th>协议</th>
-              <th>Hostname</th>
-              <th>TLS 模式 / 证书引用</th>
-              <th>TLS 选项 (Options)</th>
-              <th>允许的命名空间</th>
-              <th>允许的资源类型 (Kinds)</th>
+              <th>{t.gateway.name}</th>
+              <th>{t.gateway.port}</th>
+              <th>{t.gateway.protocol}</th>
+              <th>{t.gateway.hostname}</th>
+              <th>{t.gateway.tlsMode}</th>
+              <th>{t.gateway.tlsOptions}</th>
+              <th>{t.gateway.allowedNamespaces}</th>
+              <th>{t.gateway.allowedKinds}</th>
             </tr>
           </thead>
           <tbody>
@@ -57,13 +60,13 @@ export default function GatewayDetail() {
     },
     {
       key: 'addresses',
-      title: '外部地址 (External Addresses)',
+      title: t.gateway.externalAddresses,
       content: (
         <table className="content-table">
           <thead>
             <tr>
-              <th>类型 (Type)</th>
-              <th>值 (Value)</th>
+              <th>{t.gateway.type}</th>
+              <th>{t.gateway.value}</th>
             </tr>
           </thead>
           <tbody>

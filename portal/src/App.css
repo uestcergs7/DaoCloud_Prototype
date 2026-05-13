@@ -189,3 +189,48 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* User Profile & Language Switcher */
+.user-profile-area {
+  position: relative;
+}
+
+.lang-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background-color: #fff;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  padding: 4px 0;
+  z-index: 1000;
+}
+
+.lang-dropdown-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #999;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.lang-option {
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.lang-option:hover {
+  background-color: var(--bg-hover);
+}
+
+.lang-option.active {
+  color: var(--primary-color);
+  font-weight: 500;
+  background-color: #e5f0ff;
+}

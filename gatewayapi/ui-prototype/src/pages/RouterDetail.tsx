@@ -1,30 +1,33 @@
 import { Header } from '../components/Header';
 import { BasicInfoCard } from '../components/BasicInfoCard';
 import { TabsCard } from '../components/TabsCard';
+import { useI18n } from '../I18nContext';
 
 export default function RouterDetail() {
+  const t = useI18n();
+
   const basicInfo = [
-    { label: '名称', value: 'http-route' },
-    { label: '状态', value: '正常', status: 'success' as const },
-    { label: '路由类型', value: 'HTTPRoute' },
-    { label: '所属网关', value: 'test-gw (bs-system)' },
-    { label: '域名匹配', value: 'hr.daocloud.test' },
-    { label: '命名空间', value: 'bs-system' },
-    { label: '创建时间', value: '2026-01-18 23:32' }
+    { label: t.router.name, value: 'http-route' },
+    { label: t.router.status, value: '正常', status: 'success' as const },
+    { label: t.router.routeType, value: 'HTTPRoute' },
+    { label: t.router.parentGateway, value: 'test-gw (bs-system)' },
+    { label: t.router.hostnameMatch, value: 'hr.daocloud.test' },
+    { label: t.router.namespace, value: 'bs-system' },
+    { label: t.router.createdAt, value: '2026-01-18 23:32' }
   ];
 
   const tabs = [
     {
       key: 'matches',
-      title: '路由规则 (Matches)',
+      title: t.router.matches,
       content: (
         <table className="content-table">
           <thead>
             <tr>
-              <th>路径 (Path)</th>
-              <th>请求方法 (Method)</th>
-              <th>请求头 (Headers)</th>
-              <th>参数匹配 (Query Params)</th>
+              <th>{t.router.path}</th>
+              <th>{t.router.method}</th>
+              <th>{t.router.headers}</th>
+              <th>{t.router.queryParams}</th>
             </tr>
           </thead>
           <tbody>
@@ -40,13 +43,13 @@ export default function RouterDetail() {
     },
     {
       key: 'filters',
-      title: '过滤器 (Filters)',
+      title: t.router.filters,
       content: (
         <table className="content-table">
           <thead>
             <tr>
-              <th>过滤器类型</th>
-              <th>配置详情</th>
+              <th>{t.router.filterType}</th>
+              <th>{t.router.filterConfig}</th>
             </tr>
           </thead>
           <tbody>
@@ -83,14 +86,14 @@ export default function RouterDetail() {
     },
     {
       key: 'backend',
-      title: '后端服务 (Backend Refs)',
+      title: t.router.backendRefs,
       content: (
         <table className="content-table">
           <thead>
             <tr>
-              <th>服务名称</th>
-              <th>端口</th>
-              <th>权重</th>
+              <th>{t.router.serviceName}</th>
+              <th>{t.router.port}</th>
+              <th>{t.router.weight}</th>
             </tr>
           </thead>
           <tbody>
