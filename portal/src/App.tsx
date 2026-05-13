@@ -115,6 +115,7 @@ function IframeViewer({ url, lang }: { url: string; lang: string }) {
 
 function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
   const location = useLocation();
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const t = portalI18n[lang as keyof typeof portalI18n] || portalI18n.zh;
   
   // Find matching URL for iframe
@@ -136,14 +137,32 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
              {location.pathname === '/gateway-api' ? 'Kpanda / Gateway API' : t.breadcrumbHome}
           </div>
           <div className="header-right">
-            <button
-              className="lang-toggle"
-              onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-              title={lang === 'zh' ? 'Switch to English' : '切换为中文'}
-            >
-              <Globe size={16} />
-              <span>{lang === 'zh' ? '中文' : 'EN'}</span>
-            </button>
+            <div className="lang-wrapper">
+              <button
+                className="lang-toggle"
+                onClick={() => setShowLangMenu(!showLangMenu)}
+              >
+                <Globe size={16} />
+                <span>Language</span>
+                <ChevronDown size={14} />
+              </button>
+              {showLangMenu && (
+                <div className="lang-dropdown">
+                  <div
+                    className={`lang-option ${lang === 'zh' ? 'active' : ''}`}
+                    onClick={() => { setLang('zh'); setShowLangMenu(false); }}
+                  >
+                    中文
+                  </div>
+                  <div
+                    className={`lang-option ${lang === 'en' ? 'active' : ''}`}
+                    onClick={() => { setLang('en'); setShowLangMenu(false); }}
+                  >
+                    EN
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="user-profile">
               <div className="avatar">A</div>
               <span>Admin</span>
