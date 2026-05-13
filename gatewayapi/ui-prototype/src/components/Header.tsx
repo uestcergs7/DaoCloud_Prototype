@@ -49,7 +49,6 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
 
   return (
     <div className="header-area">
-      {/* Toast notification */}
       {toast && <div className="toast-notification"><Check size={16} /> {toast}</div>}
 
       <div className="breadcrumb">
@@ -81,7 +80,7 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
         </div>
       </div>
 
-      {/* ===== Labels & Annotations Modal ===== */}
+      {/* Labels & Annotations Modal */}
       {activeModal === 'labels' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -130,13 +129,13 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
             </div>
             <div className="modal-footer">
               <button className="btn-default" onClick={closeModal}>{t.header.cancel}</button>
-              <button className="btn-primary" onClick={() => { closeModal(); showToast('标签与注解已保存'); }}>{t.header.confirm}</button>
+              <button className="btn-primary" onClick={() => { closeModal(); showToast(t.header.labelsSaved); }}>{t.header.confirm}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== View YAML Modal (Read-only) ===== */}
+      {/* View YAML Modal */}
       {activeModal === 'viewYaml' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content modal-wide" onClick={e => e.stopPropagation()}>
@@ -148,14 +147,14 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
               <pre className="yaml-viewer">{yamlContent}</pre>
             </div>
             <div className="modal-footer">
-              <button className="btn-default" onClick={() => { navigator.clipboard.writeText(yamlContent); showToast('YAML 已复制到剪贴板'); }}>复制</button>
+              <button className="btn-default" onClick={() => { navigator.clipboard.writeText(yamlContent); showToast(t.header.yamlCopied); }}>{t.header.copy}</button>
               <button className="btn-primary" onClick={closeModal}>{t.header.confirm}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== Edit YAML Modal ===== */}
+      {/* Edit YAML Modal */}
       {activeModal === 'editYaml' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content modal-wide" onClick={e => e.stopPropagation()}>
@@ -173,48 +172,48 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
             </div>
             <div className="modal-footer">
               <button className="btn-default" onClick={closeModal}>{t.header.cancel}</button>
-              <button className="btn-primary" onClick={() => { closeModal(); showToast('YAML 已保存'); }}>{t.header.confirm}</button>
+              <button className="btn-primary" onClick={() => { closeModal(); showToast(t.header.yamlSaved); }}>{t.header.confirm}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== Update Confirmation Modal ===== */}
+      {/* Update Modal */}
       {activeModal === 'update' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content modal-small" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{t.header.update} {type}</h3>
+              <h3>{t.header.updateTitle} {type}</h3>
               <button className="btn-icon-clear" onClick={closeModal}><X size={20} /></button>
             </div>
             <div className="modal-body">
-              <p className="confirm-text">确认要更新资源 <strong>{name}</strong> 吗？系统将重新同步该资源的最新配置。</p>
+              <p className="confirm-text">{t.header.updateConfirm}</p>
             </div>
             <div className="modal-footer">
               <button className="btn-default" onClick={closeModal}>{t.header.cancel}</button>
-              <button className="btn-primary" onClick={() => { closeModal(); showToast(`${name} 已成功更新`); }}>{t.header.confirm}</button>
+              <button className="btn-primary" onClick={() => { closeModal(); showToast(t.header.updateSuccess); }}>{t.header.confirm}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== Delete Confirmation Modal ===== */}
+      {/* Delete Confirmation Modal */}
       {activeModal === 'delete' && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content modal-small" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ color: '#d32f2f' }}>{t.header.delete} {type}</h3>
+              <h3 style={{ color: '#d32f2f' }}>{t.header.deleteTitle} {type}</h3>
               <button className="btn-icon-clear" onClick={closeModal}><X size={20} /></button>
             </div>
             <div className="modal-body">
               <div className="delete-warning">
-                <p>⚠️ 此操作不可撤销。即将永久删除以下资源：</p>
+                <p>{t.header.deleteWarning}</p>
                 <div className="delete-target">
                   <div><strong>{type}</strong>: {name}</div>
                   <div>Namespace: {namespace}</div>
                   <div>Cluster: {cluster}</div>
                 </div>
-                <p style={{ marginTop: 12 }}>请输入资源名称 <strong>{name}</strong> 以确认删除：</p>
+                <p style={{ marginTop: 12 }}>{t.header.deleteInputHint} <strong>{name}</strong> {t.header.deleteInputHintSuffix}</p>
                 <input type="text" className="delete-confirm-input" id="delete-confirm-input" placeholder={name} />
               </div>
             </div>
@@ -224,7 +223,7 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
                 const input = document.getElementById('delete-confirm-input') as HTMLInputElement;
                 if (input?.value === name) {
                   closeModal();
-                  showToast(`${name} 已删除`);
+                  showToast(`${name} ${t.header.deleteSuccess}`);
                 } else {
                   input?.classList.add('shake');
                   setTimeout(() => input?.classList.remove('shake'), 500);

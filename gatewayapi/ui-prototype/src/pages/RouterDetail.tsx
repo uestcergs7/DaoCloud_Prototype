@@ -8,7 +8,7 @@ export default function RouterDetail() {
 
   const basicInfo = [
     { label: t.router.name, value: 'http-route' },
-    { label: t.router.status, value: '正常', status: 'success' as const },
+    { label: t.router.status, value: t.common.statusNormal, status: 'success' as const },
     { label: t.router.routeType, value: 'HTTPRoute' },
     { label: t.router.parentGateway, value: 'test-gw (bs-system)' },
     { label: t.router.hostnameMatch, value: 'hr.daocloud.test' },

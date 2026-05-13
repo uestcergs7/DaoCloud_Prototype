@@ -8,7 +8,7 @@ export default function GatewayDetail() {
 
   const basicInfo = [
     { label: t.gateway.name, value: 'test-gw' },
-    { label: t.gateway.status, value: '正常', status: 'success' as const },
+    { label: t.gateway.status, value: t.common.statusNormal, status: 'success' as const },
     { label: t.gateway.alias, value: '-' },
     { label: t.gateway.gatewayClass, value: 'envoy-gateway' },
     { label: t.gateway.namespace, value: 'bs-system' },
