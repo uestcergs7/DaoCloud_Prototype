@@ -115,7 +115,6 @@ function IframeViewer({ url, lang }: { url: string; lang: string }) {
 
 function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
   const location = useLocation();
-  const [showLangMenu, setShowLangMenu] = useState(false);
   const t = portalI18n[lang as keyof typeof portalI18n] || portalI18n.zh;
   
   // Find matching URL for iframe
@@ -136,32 +135,19 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
           <div className="breadcrumb-simple">
              {location.pathname === '/gateway-api' ? 'Kpanda / Gateway API' : t.breadcrumbHome}
           </div>
-          <div className="user-profile-area">
-            <div className="user-profile" onClick={() => setShowLangMenu(!showLangMenu)}>
+          <div className="header-right">
+            <button
+              className="lang-toggle"
+              onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+              title={lang === 'zh' ? 'Switch to English' : '切换为中文'}
+            >
+              <Globe size={16} />
+              <span>{lang === 'zh' ? '中文' : 'EN'}</span>
+            </button>
+            <div className="user-profile">
               <div className="avatar">A</div>
               <span>Admin</span>
-              <ChevronDown size={14} />
             </div>
-            {showLangMenu && (
-              <div className="lang-dropdown">
-                <div className="lang-dropdown-title">
-                  <Globe size={14} />
-                  <span>{t.language}</span>
-                </div>
-                <div
-                  className={`lang-option ${lang === 'zh' ? 'active' : ''}`}
-                  onClick={() => { setLang('zh'); setShowLangMenu(false); }}
-                >
-                  {t.chinese}
-                </div>
-                <div
-                  className={`lang-option ${lang === 'en' ? 'active' : ''}`}
-                  onClick={() => { setLang('en'); setShowLangMenu(false); }}
-                >
-                  {t.english}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         <Routes>
