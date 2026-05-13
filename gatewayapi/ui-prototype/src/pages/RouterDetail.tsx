@@ -7,7 +7,7 @@ export default function RouterDetail() {
     { label: '名称', value: 'http-route' },
     { label: '状态', value: '正常', status: 'success' as const },
     { label: '路由类型', value: 'HTTPRoute' },
-    { label: '所属网关', value: 'test-gw' },
+    { label: '所属网关', value: 'test-gw (bs-system), backup-gw (default)' },
     { label: '域名匹配', value: 'hr.daocloud.test' },
     { label: '创建时间', value: '2026-01-18 23:32' }
   ];
@@ -61,6 +61,13 @@ export default function RouterDetail() {
               <td>URLRewrite</td>
               <td>
                 <span className="badge blue">ReplacePrefixMatch</span> /v2
+              </td>
+            </tr>
+            <tr>
+              <td>ResponseHeaderModifier</td>
+              <td>
+                <div><span className="badge blue">Add</span> Cache-Control: no-cache</div>
+                <div><span className="badge blue">Set</span> X-Response-Time: optimized</div>
               </td>
             </tr>
             <tr>

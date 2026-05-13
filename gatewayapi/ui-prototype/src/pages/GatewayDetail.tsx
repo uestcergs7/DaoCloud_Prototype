@@ -25,7 +25,9 @@ export default function GatewayDetail() {
               <th>协议</th>
               <th>Hostname</th>
               <th>TLS 模式 / 证书引用</th>
-              <th>允许的路由 (Allowed Routes)</th>
+              <th>TLS 选项 (Options)</th>
+              <th>允许的命名空间</th>
+              <th>允许的资源类型 (Kinds)</th>
             </tr>
           </thead>
           <tbody>
@@ -35,7 +37,9 @@ export default function GatewayDetail() {
               <td>HTTP</td>
               <td>-</td>
               <td>-</td>
+              <td>-</td>
               <td>Same Namespace</td>
+              <td>HTTPRoute</td>
             </tr>
             <tr>
               <td>https-api</td>
@@ -43,7 +47,9 @@ export default function GatewayDetail() {
               <td>HTTPS</td>
               <td>api.example.com</td>
               <td>Terminate / api-example-com-tls</td>
+              <td><span className="badge">networking.istio.io/tls-min-version</span>: TLSv1_3</td>
               <td>Selector (exposed-to-gateway=true)</td>
+              <td>HTTPRoute, GRPCRoute</td>
             </tr>
           </tbody>
         </table>
