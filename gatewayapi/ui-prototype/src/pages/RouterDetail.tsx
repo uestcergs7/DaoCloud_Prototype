@@ -121,6 +121,53 @@ export default function RouterDetail() {
         mockAnnotations={[
           { key: 'external-dns.alpha.kubernetes.io/hostname', value: 'hr.daocloud.test' }
         ]}
+        yamlContent={`apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-route
+  namespace: bs-system
+  labels:
+    app: frontend
+spec:
+  parentRefs:
+    - name: test-gw
+      namespace: bs-system
+  hostnames:
+    - hr.daocloud.test
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+          method: POST
+          headers:
+            - type: Exact
+              name: X-Api-Version
+              value: v2
+          queryParams:
+            - type: Exact
+              name: debug
+              value: "true"
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: X-Internal-Source
+                value: gateway-api
+            set:
+              - name: X-App-Id
+                value: shopping-cart-v1
+            remove:
+              - X-Debug-Token
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefix: /v2
+      backendRefs:
+        - name: ht-backend
+          port: 8080
+          weight: 100`}
       />
       <BasicInfoCard items={basicInfo} />
       <TabsCard tabs={tabs} />

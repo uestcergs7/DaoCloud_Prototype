@@ -55,6 +55,21 @@ export default function GatewayClassDetail() {
         mockAnnotations={[
           { key: 'gateway.networking.k8s.io/is-default-class', value: 'true' }
         ]}
+        yamlContent={`apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-internet
+  labels:
+    app.kubernetes.io/managed-by: envoy-gateway
+  annotations:
+    gateway.networking.k8s.io/is-default-class: "true"
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: custom-proxy-config
+    namespace: envoy-gateway-system`}
       />
       <BasicInfoCard items={basicInfo} />
       <TabsCard tabs={tabs} />

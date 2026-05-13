@@ -95,6 +95,42 @@ export default function GatewayDetail() {
           { key: 'kapnda.io/alias-name', value: 'Production API Gateway' },
           { key: 'service.beta.kubernetes.io/load-balancer-type', value: 'external' }
         ]}
+        yamlContent={`apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-gw
+  namespace: bs-system
+  labels:
+    gateway: test-gw
+    environment: production
+  annotations:
+    kapnda.io/alias-name: Production API Gateway
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: https-api
+      port: 443
+      protocol: HTTPS
+      hostname: api.example.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-example-com-tls
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              exposed-to-gateway: "true"
+  addresses:
+    - type: IPAddress
+      value: 10.23.44.12`}
       />
       <BasicInfoCard items={basicInfo} />
       <TabsCard tabs={tabs} />
