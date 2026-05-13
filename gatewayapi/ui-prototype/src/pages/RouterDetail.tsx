@@ -7,7 +7,7 @@ export default function RouterDetail() {
     { label: '名称', value: 'http-route' },
     { label: '状态', value: '正常', status: 'success' as const },
     { label: '路由类型', value: 'HTTPRoute' },
-    { label: '所属网关', value: 'test-gw (bs-system), backup-gw (default)' },
+    { label: '所属网关', value: 'test-gw (bs-system)' },
     { label: '域名匹配', value: 'hr.daocloud.test' },
     { label: '命名空间', value: 'bs-system' },
     { label: '创建时间', value: '2026-01-18 23:32' }
