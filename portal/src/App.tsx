@@ -33,7 +33,7 @@ function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <div className="logo-placeholder"></div>
+        <img src="/daocloud-logo.png" alt="DaoCloud Logo" className="logo-image" />
         <span className="logo-text">DaoCloud Prototype</span>
       </div>
       <div className="sidebar-nav">
