@@ -7,9 +7,9 @@ function App() {
   return (
     <div className="page-container">
       <nav className="nav-menu">
-        <NavLink to="/gateway-class" className={({ isActive }) => isActive ? 'active' : ''}>Gateway Class</NavLink>
         <NavLink to="/gateway" className={({ isActive }) => isActive ? 'active' : ''}>Gateway</NavLink>
         <NavLink to="/router" className={({ isActive }) => isActive ? 'active' : ''}>Router</NavLink>
+        <NavLink to="/gateway-class" className={({ isActive }) => isActive ? 'active' : ''}>Gateway Class</NavLink>
       </nav>
       
       <Routes>
