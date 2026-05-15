@@ -1,6 +1,5 @@
 import { Header } from '../components/Header';
 import { BasicInfoCard } from '../components/BasicInfoCard';
-import { TabsCard } from '../components/TabsCard';
 import { useI18n } from '../I18nContext';
 
 export default function GatewayClassDetail() {
@@ -11,35 +10,7 @@ export default function GatewayClassDetail() {
     { label: t.gatewayClass.status, value: 'Accepted', status: 'success' as const },
     { label: t.gatewayClass.alias, value: '-' },
     { label: t.gatewayClass.controller, value: 'gateway.envoyproxy.io/gatewayclass-controller' },
-    { label: t.gatewayClass.configParams, value: '-' },
     { label: t.gatewayClass.createdAt, value: '2026-01-18 12:32' }
-  ];
-
-  const tabs = [
-    {
-      key: 'parameters',
-      title: t.gatewayClass.parametersRef,
-      content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.gatewayClass.apiGroup}</th>
-              <th>{t.gatewayClass.kind}</th>
-              <th>{t.gatewayClass.resourceName}</th>
-              <th>{t.gatewayClass.namespace}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>gateway.envoyproxy.io</td>
-              <td>EnvoyProxy</td>
-              <td>custom-proxy-config</td>
-              <td>envoy-gateway-system</td>
-            </tr>
-          </tbody>
-        </table>
-      )
-    }
   ];
 
   return (
@@ -72,7 +43,29 @@ spec:
     namespace: envoy-gateway-system`}
       />
       <BasicInfoCard items={basicInfo} />
-      <TabsCard tabs={tabs} />
+      
+      <div className="info-card" style={{ display: 'block' }}>
+        <div className="section-title" style={{ marginBottom: '20px' }}>{t.gatewayClass.parametersRef}</div>
+        <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.apiGroup}</div>
+            <div className="info-value">gateway.envoyproxy.io</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.kind}</div>
+            <div className="info-value">EnvoyProxy</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.namespace}</div>
+            <div className="info-value">envoy-gateway-system</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.resourceName}</div>
+            <div className="info-value">custom-proxy-config</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

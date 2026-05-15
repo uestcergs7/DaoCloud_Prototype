@@ -67,14 +67,11 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
       </div>
       <div className="header-actions">
         <button className="btn-default" onClick={() => setActiveModal('update')}>{t.header.update}</button>
-        <button className="btn-default" onClick={() => { setEditableYaml(yamlContent); setActiveModal('viewYaml'); }}>{t.header.viewYaml}</button>
+        <button className="btn-default" onClick={() => { setEditableYaml(yamlContent); setActiveModal('editYaml'); }}>{t.header.editYaml}</button>
         
         <div className="dropdown-container">
           <button className="btn-default btn-icon"><MoreHorizontal size={16} /></button>
           <div className="dropdown-menu">
-            <span className="dropdown-item" onClick={() => { setEditableYaml(yamlContent); setActiveModal('editYaml'); }}>{t.header.editYaml}</span>
-            <span className="dropdown-item" onClick={() => setActiveModal('labels')}>{t.header.labelsAnnotations}</span>
-            <div className="dropdown-divider"></div>
             <span className="dropdown-item danger" onClick={() => setActiveModal('delete')}>{t.header.delete}</span>
           </div>
         </div>

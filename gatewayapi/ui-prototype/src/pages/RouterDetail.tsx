@@ -9,101 +9,245 @@ export default function RouterDetail() {
   const basicInfo = [
     { label: t.router.name, value: 'http-route' },
     { label: t.router.status, value: t.common.statusNormal, status: 'success' as const },
-    { label: t.router.routeType, value: 'HTTPRoute' },
-    { label: t.router.parentGateway, value: 'test-gw (bs-system)' },
-    { label: t.router.hostnameMatch, value: 'hr.daocloud.test' },
+    { label: t.router.alias, value: 'API Route' },
     { label: t.router.namespace, value: 'bs-system' },
+    { label: t.router.routeType, value: 'HTTPRoute' },
+    { label: t.router.gatewayTarget, value: '本命名空间' },
+    { label: t.router.parentGateway, value: 'test-gw' },
+    { label: t.router.hostnameMatch, value: 'hr.daocloud.test' },
     { label: t.router.createdAt, value: '2026-01-18 23:32' }
+  ];
+
+  const mockRules = [
+    {
+      name: '01',
+      matches: {
+        pathType: '前缀匹配',
+        pathValue: '/api',
+        methods: ['POST', 'GET'],
+        headers: [
+          { key: 'X-Api-Version', type: '等于', value: 'v2' }
+        ],
+        queryParams: [
+          { name: 'debug', type: '等于', value: 'true' }
+        ]
+      },
+      filters: {
+        reqHeaderRewrite: {
+          enabled: true,
+          actions: [
+            { action: '添加', key: 'x-internal-source', value: 'gateway-api' },
+            { action: '设置', key: 'x-app-id', value: 'shopping-cart-v1' },
+            { action: '删除', key: 'x-debug-token', value: '-' }
+          ]
+        },
+        resHeaderRewrite: {
+          enabled: false,
+          actions: []
+        },
+        urlRewrite: {
+          enabled: true,
+          originalPath: '/api',
+          rewritePath: '/v2'
+        }
+      },
+      backends: [
+        { name: 'ht-backend', port: 8080, weight: 100, mirror: false },
+        { name: 'mirror-backend', port: 8081, weight: 0, mirror: true }
+      ]
+    }
   ];
 
   const tabs = [
     {
-      key: 'matches',
-      title: t.router.matches,
+      key: 'rules',
+      title: t.router.rules,
       content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.router.path}</th>
-              <th>{t.router.method}</th>
-              <th>{t.router.headers}</th>
-              <th>{t.router.queryParams}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span className="badge">PathPrefix</span>/api</td>
-              <td>POST</td>
-              <td><span className="badge">Exact</span>X-Api-Version: v2</td>
-              <td><span className="badge">Exact</span>debug: true</td>
-            </tr>
-          </tbody>
-        </table>
-      )
-    },
-    {
-      key: 'filters',
-      title: t.router.filters,
-      content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.router.filterType}</th>
-              <th>{t.router.filterConfig}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>RequestHeaderModifier</td>
-              <td>
-                <div><span className="badge blue">Add</span> X-Internal-Source: gateway-api</div>
-                <div><span className="badge blue">Set</span> X-App-Id: shopping-cart-v1</div>
-                <div><span className="badge blue">Remove</span> X-Debug-Token</div>
-              </td>
-            </tr>
-            <tr>
-              <td>URLRewrite</td>
-              <td>
-                <span className="badge blue">ReplacePrefixMatch</span> /v2
-              </td>
-            </tr>
-            <tr>
-              <td>ResponseHeaderModifier</td>
-              <td>
-                <div><span className="badge blue">Add</span> Cache-Control: no-cache</div>
-                <div><span className="badge blue">Set</span> X-Response-Time: optimized</div>
-              </td>
-            </tr>
-            <tr>
-              <td>RequestMirror</td>
-              <td>
-                Mirror to: mirror-service:8080
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      )
-    },
-    {
-      key: 'backend',
-      title: t.router.backendRefs,
-      content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.router.serviceName}</th>
-              <th>{t.router.port}</th>
-              <th>{t.router.weight}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>ht-backend</td>
-              <td>8080</td>
-              <td>100</td>
-            </tr>
-          </tbody>
-        </table>
+        <div>
+          {mockRules.map((rule, i) => (
+            <div key={i} className="listener-card">
+              <div className="listener-header">
+                <span>{t.router.rule} {rule.name}</span>
+              </div>
+              <div className="listener-body">
+                
+                {/* Traffic Match Conditions */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>{t.router.trafficMatch}</div>
+                  <div className="tls-card" style={{ marginTop: 0 }}>
+                    <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+                      <div className="info-item">
+                        <div className="info-label">{t.router.path}</div>
+                        <div className="info-value">{rule.matches.pathType} {rule.matches.pathValue}</div>
+                      </div>
+                      <div className="info-item">
+                        <div className="info-label">{t.router.method}</div>
+                        <div className="info-value">{rule.matches.methods.join(', ') || '-'}</div>
+                      </div>
+                    </div>
+                    
+                    {rule.matches.headers.length > 0 && (
+                      <div style={{ marginTop: '16px' }}>
+                        <div className="info-label" style={{ marginBottom: '8px' }}>{t.router.headers}</div>
+                        <table className="inner-table">
+                          <thead>
+                            <tr>
+                              <th>{t.router.headerKey}</th>
+                              <th>{t.router.matchType}</th>
+                              <th>{t.router.headerValue}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rule.matches.headers.map((h, idx) => (
+                              <tr key={idx}>
+                                <td>{h.key}</td>
+                                <td>{h.type}</td>
+                                <td>{h.value}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {rule.matches.queryParams.length > 0 && (
+                      <div style={{ marginTop: '16px' }}>
+                        <div className="info-label" style={{ marginBottom: '8px' }}>{t.router.queryParams}</div>
+                        <table className="inner-table">
+                          <thead>
+                            <tr>
+                              <th>{t.router.queryName}</th>
+                              <th>{t.router.matchType}</th>
+                              <th>{t.router.headerValue}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rule.matches.queryParams.map((q, idx) => (
+                              <tr key={idx}>
+                                <td>{q.name}</td>
+                                <td>{q.type}</td>
+                                <td>{q.value}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Filters */}
+                { (rule.filters.reqHeaderRewrite.enabled || rule.filters.resHeaderRewrite.enabled || rule.filters.urlRewrite.enabled) && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>{t.router.filters}</div>
+                    <div className="tls-card" style={{ marginTop: 0 }}>
+                      
+                      {rule.filters.reqHeaderRewrite.enabled && (
+                        <div style={{ marginBottom: '16px' }}>
+                          <div className="info-label" style={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>
+                            {t.router.reqHeaderRewrite}
+                          </div>
+                          <table className="inner-table">
+                            <thead>
+                              <tr>
+                                <th>{t.router.action}</th>
+                                <th>{t.router.key}</th>
+                                <th>{t.router.value}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rule.filters.reqHeaderRewrite.actions.map((a, idx) => (
+                                <tr key={idx}>
+                                  <td>{a.action}</td>
+                                  <td>{a.key}</td>
+                                  <td>{a.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {rule.filters.resHeaderRewrite.enabled && (
+                        <div style={{ marginBottom: '16px' }}>
+                          <div className="info-label" style={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>
+                            {t.router.resHeaderRewrite}
+                          </div>
+                          <table className="inner-table">
+                            <thead>
+                              <tr>
+                                <th>{t.router.action}</th>
+                                <th>{t.router.key}</th>
+                                <th>{t.router.value}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rule.filters.resHeaderRewrite.actions.map((a, idx) => (
+                                <tr key={idx}>
+                                  <td>{a.action}</td>
+                                  <td>{a.key}</td>
+                                  <td>{a.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {rule.filters.urlRewrite.enabled && (
+                        <div>
+                          <div className="info-label" style={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>
+                            {t.router.urlRewrite}
+                          </div>
+                          <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+                            <div className="info-item">
+                              <div className="info-label">{t.router.originalPath}</div>
+                              <div className="info-value">{rule.filters.urlRewrite.originalPath}</div>
+                            </div>
+                            <div className="info-item">
+                              <div className="info-label">{t.router.rewritePath}</div>
+                              <div className="info-value">{rule.filters.urlRewrite.rewritePath}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+                )}
+
+                {/* Backend Services */}
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>{t.router.backendRefs}</div>
+                  <div className="tls-card" style={{ marginTop: 0 }}>
+                    <div className="info-label" style={{ marginBottom: '8px' }}>{t.router.targetServices}</div>
+                    <table className="inner-table">
+                      <thead>
+                        <tr>
+                          <th>{t.router.serviceName}</th>
+                          <th>{t.router.port}</th>
+                          <th>{t.router.weight}</th>
+                          <th>{t.router.trafficMirror}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rule.backends.map((b, idx) => (
+                          <tr key={idx}>
+                            <td>{b.name}</td>
+                            <td>{b.port}</td>
+                            <td>{b.weight}</td>
+                            <td>{b.mirror ? t.router.enable : t.router.disable}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          ))}
+        </div>
       )
     }
   ];

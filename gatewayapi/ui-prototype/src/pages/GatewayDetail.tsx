@@ -12,7 +12,8 @@ export default function GatewayDetail() {
     { label: t.gateway.alias, value: '-' },
     { label: t.gateway.gatewayClass, value: 'envoy-gateway' },
     { label: t.gateway.namespace, value: 'bs-system' },
-    { label: t.gateway.createdAt, value: '2026-01-18 23:32' }
+    { label: t.gateway.createdAt, value: '2026-01-18 23:32' },
+    { label: t.gateway.externalAddress, value: '10.23.44.12' }
   ];
 
   const tabs = [
@@ -20,62 +21,176 @@ export default function GatewayDetail() {
       key: 'listeners',
       title: t.gateway.listeners,
       content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.gateway.name}</th>
-              <th>{t.gateway.port}</th>
-              <th>{t.gateway.protocol}</th>
-              <th>{t.gateway.hostname}</th>
-              <th>{t.gateway.tlsMode}</th>
-              <th>{t.gateway.tlsOptions}</th>
-              <th>{t.gateway.allowedNamespaces}</th>
-              <th>{t.gateway.allowedKinds}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>http</td>
-              <td>80</td>
-              <td>HTTP</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>Same Namespace</td>
-              <td>HTTPRoute</td>
-            </tr>
-            <tr>
-              <td>https-api</td>
-              <td>443</td>
-              <td>HTTPS</td>
-              <td>api.example.com</td>
-              <td>Terminate / api-example-com-tls</td>
-              <td><span className="badge">networking.istio.io/tls-min-version</span>: TLSv1_3</td>
-              <td>Selector (exposed-to-gateway=true)</td>
-              <td>HTTPRoute, GRPCRoute</td>
-            </tr>
-          </tbody>
-        </table>
-      )
-    },
-    {
-      key: 'addresses',
-      title: t.gateway.externalAddresses,
-      content: (
-        <table className="content-table">
-          <thead>
-            <tr>
-              <th>{t.gateway.type}</th>
-              <th>{t.gateway.value}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>IPAddress</td>
-              <td>10.23.44.12</td>
-            </tr>
-          </tbody>
-        </table>
+        <div>
+          {[
+            {
+              name: 'http',
+              port: 80,
+              protocol: 'HTTP',
+              hostname: '',
+              tlsMode: '',
+              tlsRefs: [],
+              tlsOptions: [],
+              allowedNamespaces: '当前',
+              nsSelector: [],
+              allowedKinds: [{ crd: 'gateway.networking.k8s.io', cr: 'HTTPRoute' }]
+            },
+            {
+              name: 'https-api',
+              port: 443,
+              protocol: 'HTTPS',
+              hostname: 'api.example.com',
+              tlsMode: 'Terminate',
+              tlsRefs: [
+                { kind: 'Secret', group: 'core', name: 'api-example-com-tls', namespace: 'bs-system' }
+              ],
+              tlsOptions: [
+                { key: 'networking.istio.io/tls-min-version', value: 'TLSv1_3' }
+              ],
+              allowedNamespaces: '指定 NS 范围',
+              nsSelector: [
+                { key: 'exposed-to-gateway', value: 'true' }
+              ],
+              allowedKinds: [
+                { crd: 'gateway.networking.k8s.io', cr: 'HTTPRoute' },
+                { crd: 'gateway.networking.k8s.io', cr: 'GRPCRoute' }
+              ]
+            }
+          ].map((l, i) => (
+            <div key={i} className="listener-card">
+              <div className="listener-header">
+                <span>监听器 {String(i + 1).padStart(2, '0')} - {l.name}</span>
+              </div>
+              <div className="listener-body">
+                <div className="listener-info-grid">
+                  <div className="info-item">
+                    <div className="info-label">{t.gateway.name}</div>
+                    <div className="info-value">{l.name}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">{t.gateway.port}</div>
+                    <div className="info-value">{l.port}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">{t.gateway.protocol}</div>
+                    <div className="info-value">{l.protocol}</div>
+                  </div>
+                  {['HTTP', 'HTTPS', 'TLS'].includes(l.protocol) && (
+                    <div className="info-item">
+                      <div className="info-label">{t.gateway.hostname}</div>
+                      <div className="info-value">{l.hostname || '-'}</div>
+                    </div>
+                  )}
+                  {['HTTPS', 'TLS'].includes(l.protocol) && (
+                    <div className="info-item">
+                      <div className="info-label">{t.gateway.tlsMode}</div>
+                      <div className="info-value">{l.tlsMode || '-'}</div>
+                    </div>
+                  )}
+                  <div className="info-item">
+                    <div className="info-label">{t.gateway.allowedNamespaces}</div>
+                    <div className="info-value">{l.allowedNamespaces}</div>
+                  </div>
+                </div>
+
+                {/* TLS Settings Block */}
+                {['HTTPS', 'TLS'].includes(l.protocol) && l.tlsMode && (
+                  <div className="tls-card">
+                    {l.tlsRefs && l.tlsRefs.length > 0 && (
+                      <div>
+                        <div className="tls-section-title">{t.gateway.tlsRefs}</div>
+                        <table className="inner-table">
+                          <thead>
+                            <tr>
+                              <th>{t.gateway.kind}</th>
+                              <th>{t.gateway.group}</th>
+                              <th>{t.gateway.secretName}</th>
+                              <th>{t.gateway.secretNamespace}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {l.tlsRefs.map((ref, idx) => (
+                              <tr key={idx}>
+                                <td>{ref.kind}</td>
+                                <td>{ref.group}</td>
+                                <td>{ref.name}</td>
+                                <td>{ref.namespace}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {l.tlsOptions && l.tlsOptions.length > 0 && (
+                      <div>
+                        <div className="tls-section-title">{t.gateway.tlsOptions}</div>
+                        <table className="inner-table">
+                          <thead>
+                            <tr>
+                              <th>{t.header.key}</th>
+                              <th>{t.header.value}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {l.tlsOptions.map((opt, idx) => (
+                              <tr key={idx}>
+                                <td>{opt.key}</td>
+                                <td>{opt.value}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {l.allowedNamespaces === '指定 NS 范围' && l.nsSelector && l.nsSelector.length > 0 && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div className="info-label" style={{ marginBottom: '8px' }}>{t.gateway.nsSelector}</div>
+                    <table className="inner-table" style={{ margin: 0 }}>
+                      <thead>
+                        <tr>
+                          <th>{t.header.key}</th>
+                          <th>{t.header.value}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {l.nsSelector.map((sel, idx) => (
+                          <tr key={idx}>
+                            <td>{sel.key}</td>
+                            <td>{sel.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div style={{ marginTop: '16px' }}>
+                  <div className="info-label" style={{ marginBottom: '8px' }}>{t.gateway.allowedKinds}</div>
+                  <table className="inner-table" style={{ margin: 0 }}>
+                    <thead>
+                      <tr>
+                        <th>{t.gateway.crd}</th>
+                        <th>{t.gateway.cr}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {l.allowedKinds.map((k, idx) => (
+                        <tr key={idx}>
+                          <td>{k.crd}</td>
+                          <td>{k.cr}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+          ))}
+        </div>
       )
     }
   ];
