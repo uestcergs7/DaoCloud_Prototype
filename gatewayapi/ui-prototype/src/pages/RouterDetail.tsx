@@ -43,7 +43,7 @@ export default function RouterDetail() {
         },
         resHeaderRewrite: {
           enabled: false,
-          actions: []
+          actions: [] as { action: string; key: string; value: string }[]
         },
         urlRewrite: {
           enabled: true,
