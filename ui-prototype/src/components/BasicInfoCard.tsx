@@ -7,10 +7,10 @@ export interface InfoItem {
   help?: boolean;
 }
 
-export function BasicInfoCard({ items }: { items: InfoItem[] }) {
+export function BasicInfoCard({ items, title = '基本信息' }: { items: InfoItem[], title?: string }) {
   return (
     <div>
-      <div className="section-title">基本信息</div>
+      <div className="section-title">{title}</div>
       <div className="info-card">
         {items.map((item, index) => (
           <div className="info-item" key={index}>

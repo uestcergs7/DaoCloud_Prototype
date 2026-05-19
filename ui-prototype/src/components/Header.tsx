@@ -29,6 +29,20 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
 
   const closeModal = () => setActiveModal('none');
 
+  const getUpdateConfirmText = () => {
+    switch (type) {
+      case 'GatewayClass':
+        return t.header.updateConfirmGatewayClass;
+      case 'Gateway':
+        return t.header.updateConfirmGateway;
+      case 'Route':
+      case 'Router':
+        return t.header.updateConfirmRoute;
+      default:
+        return t.header.updateConfirm;
+    }
+  };
+
   // Labels handlers
   const addLabel = () => setLabels([...labels, { key: '', value: '' }]);
   const removeLabel = (idx: number) => setLabels(labels.filter((_, i) => i !== idx));
@@ -184,7 +198,7 @@ export function Header({ cluster, namespace, type, name, mockLabels = [], mockAn
               <button className="btn-icon-clear" onClick={closeModal}><X size={20} /></button>
             </div>
             <div className="modal-body">
-              <p className="confirm-text">{t.header.updateConfirm}</p>
+              <p className="confirm-text" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{getUpdateConfirmText()}</p>
             </div>
             <div className="modal-footer">
               <button className="btn-default" onClick={closeModal}>{t.header.cancel}</button>

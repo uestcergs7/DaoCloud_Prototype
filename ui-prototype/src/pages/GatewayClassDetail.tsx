@@ -43,10 +43,52 @@ spec:
     namespace: envoy-gateway-system`}
       />
       <BasicInfoCard items={basicInfo} />
-      
+      {/* ConfigMap 示例 */}
+      <div className="section-title" style={{ marginTop: '24px', marginBottom: '16px' }}>{t.gatewayClass.parametersRef} (ConfigMap示例)</div>
       <div className="info-card" style={{ display: 'block' }}>
-        <div className="section-title" style={{ marginBottom: '20px' }}>{t.gatewayClass.parametersRef}</div>
         <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.refType}</div>
+            <div className="info-value">ConfigMap</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.namespace}</div>
+            <div className="info-value">envoy-gateway-system</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.resourceName}</div>
+            <div className="info-value">custom-proxy-config</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Secret 示例 */}
+      <div className="section-title" style={{ marginTop: '24px', marginBottom: '16px' }}>{t.gatewayClass.parametersRef} (Secret示例)</div>
+      <div className="info-card" style={{ display: 'block' }}>
+        <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.refType}</div>
+            <div className="info-value">Secret</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.namespace}</div>
+            <div className="info-value">envoy-gateway-system</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.resourceName}</div>
+            <div className="info-value">custom-proxy-config</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 自定义资源 示例 */}
+      <div className="section-title" style={{ marginTop: '24px', marginBottom: '16px' }}>{t.gatewayClass.parametersRef} ({t.gatewayClass.customResource}示例)</div>
+      <div className="info-card" style={{ display: 'block' }}>
+        <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+          <div className="info-item">
+            <div className="info-label">{t.gatewayClass.refType}</div>
+            <div className="info-value">{t.gatewayClass.customResource}</div>
+          </div>
           <div className="info-item">
             <div className="info-label">{t.gatewayClass.apiGroup}</div>
             <div className="info-value">gateway.envoyproxy.io</div>

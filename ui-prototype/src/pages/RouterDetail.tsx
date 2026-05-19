@@ -11,11 +11,14 @@ export default function RouterDetail() {
     { label: t.router.status, value: t.common.statusNormal, status: 'success' as const },
     { label: t.router.alias, value: 'API Route' },
     { label: t.router.namespace, value: 'bs-system' },
+    { label: t.router.createdAt, value: '2026-01-18 23:32' }
+  ];
+
+  const gatewayConfigInfo = [
     { label: t.router.routeType, value: 'HTTPRoute' },
     { label: t.router.gatewayTarget, value: '本命名空间' },
     { label: t.router.parentGateway, value: 'test-gw' },
-    { label: t.router.hostnameMatch, value: 'hr.daocloud.test' },
-    { label: t.router.createdAt, value: '2026-01-18 23:32' }
+    { label: t.router.hostnameMatch, value: 'hr.daocloud.test' }
   ];
 
   const mockRules = [
@@ -42,8 +45,10 @@ export default function RouterDetail() {
           ]
         },
         resHeaderRewrite: {
-          enabled: false,
-          actions: []
+          enabled: true,
+          actions: [
+            { action: '添加', key: 'x-response-time', value: '10ms' }
+          ]
         },
         urlRewrite: {
           enabled: true,
@@ -257,7 +262,7 @@ export default function RouterDetail() {
       <Header
         cluster="cluster"
         namespace="bs-system"
-        type="Router"
+        type="Route"
         name="http-route"
         mockLabels={[
           { key: 'app', value: 'frontend' }
@@ -303,6 +308,11 @@ spec:
                 value: shopping-cart-v1
             remove:
               - X-Debug-Token
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            add:
+              - name: X-Response-Time
+                value: 10ms
         - type: URLRewrite
           urlRewrite:
             path:
@@ -314,6 +324,7 @@ spec:
           weight: 100`}
       />
       <BasicInfoCard items={basicInfo} />
+      <BasicInfoCard items={gatewayConfigInfo} title={t.router.gatewayConfig} />
       <TabsCard tabs={tabs} />
     </div>
   );
