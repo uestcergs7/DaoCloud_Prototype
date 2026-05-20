@@ -87,15 +87,11 @@ spec:
         <div className="listener-info-grid" style={{ marginBottom: 0 }}>
           <div className="info-item">
             <div className="info-label">{t.gatewayClass.refType}</div>
-            <div className="info-value">{t.gatewayClass.customResource}</div>
+            <div className="info-value">test-resource-name</div>
           </div>
           <div className="info-item">
             <div className="info-label">{t.gatewayClass.apiGroup}</div>
             <div className="info-value">gateway.envoyproxy.io</div>
-          </div>
-          <div className="info-item">
-            <div className="info-label">{t.gatewayClass.kind}</div>
-            <div className="info-value">EnvoyProxy</div>
           </div>
           <div className="info-item">
             <div className="info-label">{t.gatewayClass.namespace}</div>
