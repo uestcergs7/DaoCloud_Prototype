@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DaoCloud GPU iPavo - 异构算力与大模型观测治理行业竞品调研报告">
+  <title>iPavo - 行业竞品与开源方案深度调研报告</title>
+  
+  <!-- Outfit and Inter Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ============================================================ */
+    /* 核心学术风主题与配色体系 (Fresh Light Academic Geek Theme)      */
+    /* ============================================================ */
+    :root {
+      --bg-warm: #faf9f6;
+      --card-bg: #ffffff;
+      --text-dark: #0f172a;
+      --text-main: #334155;
+      --text-muted: #64748b;
+      --border-light: rgba(0, 0, 0, 0.06);
+      
+      /* 各平台主色 */
+      --runai-color: #8b5cf6;
+      --grafana-color: #ea580c;
+      --nvidia-color: #10b981;
+      --abv-color: #6366f1;
+      --kubecost-color: #0ea5e9;
+      --orange-accent: #f97316;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-warm);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.62;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶部统一多端路由条 */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      z-index: 1000;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.01);
+    }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-left img {
+      height: 26px;
+    }
+    .nav-logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .nav-links {
+      display: flex;
+      gap: 6px;
+    }
+    .nav-link-btn {
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .nav-link-btn:hover {
+      color: var(--text-dark);
+      background: rgba(0, 0, 0, 0.03);
+    }
+    .nav-link-btn.active {
+      color: #ea580c;
+      background: rgba(249, 115, 22, 0.06);
+    }
+
+    /* 学术报告版面双栏结构 */
+    .layout-wrapper {
+      max-width: 1360px;
+      margin: 40px auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+    }
+
+    /* ============================================================ */
+    /* 左侧目录树导航栏 (TOC Sidebar with Scrollspy)                  */
+    /* ============================================================ */
+    .toc-sidebar-container {
+      position: relative;
+    }
+    .toc-sidebar {
+      position: sticky;
+      top: 104px; /* 64px top nav + 40px spacing */
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.015);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+    .toc-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 10px;
+      margin-bottom: 8px;
+    }
+    .toc-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toc-item-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border-left: 2px solid transparent;
+      transition: all 0.25s ease;
+    }
+    .toc-item-link:hover {
+      color: var(--text-dark);
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .toc-item-link.active {
+      color: var(--orange-accent);
+      background: rgba(249, 115, 22, 0.04);
+      border-left-color: var(--orange-accent);
+      font-weight: 700;
+    }
+    .toc-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+    }
+
+    /* 右侧主学术内容区 */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    /* 报告主标题头 */
+    .paper-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+      text-align: center;
+    }
+    .paper-tag {
+      display: inline-block;
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid rgba(249, 115, 22, 0.15);
+      padding: 4px 14px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    .paper-header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.8px;
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+    .paper-header p {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      max-width: 760px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ============================================================ */
+    /* 竞品平台深度解读卡片 (Platform Detail Cards)                    */
+    /* ============================================================ */
+    .paper-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.01);
+      scroll-margin-top: 84px; /* Align scroll to sticky top-nav */
+      position: relative;
+    }
+    .paper-section::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: 16px 16px 0 0;
+    }
+    
+    /* 平台专题顶部边框彩条 */
+    .sec-runai::before { background: var(--runai-color); }
+    .sec-grafana::before { background: var(--grafana-color); }
+    .sec-nvidia::before { background: var(--nvidia-color); }
+    .sec-abv::before { background: var(--abv-color); }
+    .sec-kubecost::before { background: var(--kubecost-color); }
+
+    .sec-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .sec-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sec-brand-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .sec-runai .sec-brand-badge { background: #f5f3ff; color: var(--runai-color); }
+    .sec-grafana .sec-brand-badge { background: #fff7ed; color: var(--grafana-color); }
+    .sec-nvidia .sec-brand-badge { background: #ecfdf5; color: var(--nvidia-color); }
+    .sec-abv .sec-brand-badge { background: #eef2ff; color: var(--abv-color); }
+    .sec-kubecost .sec-brand-badge { background: #f0f9ff; color: var(--kubecost-color); }
+
+    /* 文字与排版细化 */
+    .sec-body {
+      font-size: 13.5px;
+      color: var(--text-main);
+    }
+    .sec-body h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin: 20px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sec-body h4::before {
+      content: "";
+      width: 4px;
+      height: 14px;
+      background: var(--orange-accent);
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .sec-body p {
+      margin-bottom: 12px;
+      line-height: 1.65;
+    }
+    .sec-body ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-bottom: 20px;
+    }
+    .sec-body li {
+      position: relative;
+      padding-left: 18px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .sec-body li::before {
+      content: "•";
+      position: absolute;
+      left: 6px;
+      color: var(--orange-accent);
+      font-weight: bold;
+    }
+    .sec-body strong {
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+    
+    .i-pavo-insight {
+      background: rgba(249, 115, 22, 0.03);
+      border: 1px dashed rgba(249, 115, 22, 0.18);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+      font-size: 12.5px;
+      color: #475569;
+      line-height: 1.6;
+    }
+    .i-pavo-insight strong {
+      color: #c2410c;
+    }
+
+    /* ============================================================ */
+    /* 截图排版框架 (Docx Screenshots Layouts)                        */
+    /* ============================================================ */
+    .screenshots-panel {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-light);
+    }
+    .screenshots-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* 屏幕截图精致卡片 */
+    .screenshot-card {
+      background: #faf9f6;
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.01);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .screenshot-card:hover {
+      border-color: var(--orange-accent);
+      background: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+    }
+    .screenshot-img-wrapper {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #edf2f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      aspect-ratio: 16 / 9;
+    }
+    .screenshot-img-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .screenshot-card:hover .screenshot-img-wrapper img {
+      transform: scale(1.02);
+    }
+    .screenshot-hover-hint {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(2px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      gap: 6px;
+    }
+    .screenshot-card:hover .screenshot-hover-hint {
+      opacity: 1;
+    }
+    .screenshot-caption {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .screenshot-card:hover .screenshot-caption {
+      color: var(--text-dark);
+    }
+
+    /* Run:ai 专属轮播画廊样式 */
+    .carousel-gallery-container {
+      position: relative;
+      margin-top: 14px;
+    }
+    .carousel-track-wrapper {
+      overflow: hidden;
+      border-radius: 12px;
+      background: #faf9f6;
+      border: 1px solid var(--border-light);
+      padding: 16px;
+    }
+    .carousel-slide {
+      display: none;
+      animation: slideFade 0.4s ease forwards;
+    }
+    .carousel-slide.active {
+      display: block;
+    }
+    @keyframes slideFade {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .carousel-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding: 0 10px;
+    }
+    .carousel-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-light);
+      background: white;
+      color: var(--text-muted);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .carousel-btn:hover {
+      border-color: var(--orange-accent);
+      color: var(--orange-accent);
+      background: rgba(249, 115, 22, 0.04);
+    }
+    .carousel-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .carousel-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .carousel-dot.active {
+      background: var(--orange-accent);
+      width: 18px;
+      border-radius: 99px;
+    }
+
+    /* ============================================================ */
+    /* 5维度打分对比明细表 (Scoring Matrix Section)                  */
+    /* ============================================================ */
+    .sec-matrix-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.01);
+      scroll-margin-top: 84px;
+    }
+    .sec-matrix-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sec-matrix-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+    .matrix-filters {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      gap: 2px;
+    }
+    .matrix-filter-btn {
+      border: none;
+      outline: none;
+      padding: 6px 12px;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .matrix-filter-btn.active {
+      background: white;
+      color: var(--text-dark);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+    .matrix-table th {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: var(--text-dark);
+      padding: 14px 16px;
+      background: #fafaf9;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .matrix-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+      color: #475569;
+      transition: all 0.2s ease;
+    }
+    .matrix-table tr:hover td {
+      background: rgba(0, 0, 0, 0.005);
+    }
+    
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 10.5px;
+      margin-right: 6px;
+    }
+    .score-s9 { background: #ecfdf5; color: #059669; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .score-s7 { background: #f0fdf4; color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.15); }
+    .score-s5 { background: #fffbeb; color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .score-s3 { background: #fff1f2; color: #e11d48; border: 1px solid rgba(244, 63, 94, 0.2); }
+
+    /* 总结语录卡片 */
+    .conclusion-box {
+      background: linear-gradient(135deg, #fff7ed, #fffbeb);
+      border: 1px solid rgba(249, 115, 22, 0.15);
+      border-radius: 12px;
+      padding: 28px 32px;
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.62;
+      scroll-margin-top: 84px;
+    }
+    .conclusion-header {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #ea580c;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ============================================================ */
+    /* 全屏放大查看 Lightbox Overlay Modal                           */
+    /* ============================================================ */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 40px;
+      cursor: zoom-out;
+      animation: modalFadeIn 0.3s ease forwards;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .lightbox-content-box {
+      position: relative;
+      max-width: 90%;
+      max-height: 80%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: default;
+    }
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .lightbox-modal.active .lightbox-img {
+      transform: scale(1);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 40px;
+      color: #94a3b8;
+      font-size: 36px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s ease;
+      line-height: 1;
+    }
+    .lightbox-close:hover {
+      color: white;
+    }
+    .lightbox-caption {
+      color: #e2e8f0;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px 20px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+      max-width: 600px;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- 顶部统一多端路由条 -->
+  <!-- ============================================================ -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <img src="DaoCloud_logo-1.png" alt="DaoCloud Logo">
+      <span class="nav-logo-text">iPavo <span class="logo-badge">RESEARCH</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link-btn">GPU 仪表盘 (Dashboard)</a>
+      <a href="/spec" class="nav-link-btn">交互式功能规格 (Spec)</a>
+      <a href="/research" class="nav-link-btn active">行业竞品调研 (Research)</a>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- 双栏主版面布局 -->
+  <!-- ============================================================ -->
+  <div class="layout-wrapper">
+    
+    <!-- 左侧目录导航 (TOC Sidebar) -->
+    <div class="toc-sidebar-container">
+      <aside class="toc-sidebar">
+        <div class="toc-title">📂 调研目录</div>
+        <ul class="toc-list">
+          <li><a href="#sec-header-id" class="toc-item-link active"><span class="toc-icon">📰</span>概述</a></li>
+          <li><a href="#sec-runai" class="toc-item-link"><span class="toc-icon">🔮</span>Run:ai 看板</a></li>
+          <li><a href="#sec-grafana" class="toc-item-link"><span class="toc-icon">📊</span>Grafana 硬件</a></li>
+          <li><a href="#sec-nvidia" class="toc-item-link"><span class="toc-icon">⚙️</span>BCM 集群</a></li>
+          <li><a href="#sec-abv" class="toc-item-link"><span class="toc-icon">🛡️</span>ABV 观测治理</a></li>
+          <li><a href="#sec-kubecost" class="toc-item-link"><span class="toc-icon">💎</span>KubeCost 容器</a></li>
+          <li><a href="#sec-matrix" class="toc-item-link"><span class="toc-icon">📋</span>评测矩阵</a></li>
+          <li><a href="#sec-conclusion" class="toc-item-link"><span class="toc-icon">💡</span>最终洞察</a></li>
+        </ul>
+      </aside>
+    </div>
+
+    <!-- 右侧学术报告内容区 -->
+    <main class="content-area">
+      
+      <!-- 概述 Header -->
+      <section class="paper-header" id="sec-header-id">
+        <span class="paper-tag">🎯 行业方案深度调研</span>
+        <h1>异构算力与大模型观测治理看板调研报告</h1>
+        <p>精选并解析业界在 GPU 切片调度、单卡物理遥测、AI 应用大盘治理和 K8s 云原生 FinOps 成本优化方面的先进看板设计，并结合 docx 文档内的真实大盘截图，沉淀 iPavo 原型的设计启发。</p>
+      </section>
+
+      <!-- 1. Run:ai -->
+      <section class="paper-section sec-runai" id="sec-runai">
+        <div class="sec-header">
+          <h2 class="sec-title">🔮 Run:ai AI集群管理与调度平台看板</h2>
+          <span class="sec-brand-badge">NVIDIA MLOps</span>
+        </div>
+        <div class="sec-body">
+          <h4>1. 平台核心定位</h4>
+          <p>Run:ai（现属 NVIDIA）是一个企业级 GPU 虚拟化和集群资源调度管理平台，旨在通过动态切片和弹性调度算法，最大化提升企业 GPU 资源的利用率，解决多租户场景下资源分配不均和算力浪费的痛点。</p>
+          
+          <h4>2. 核心功能板块</h4>
+          <ul>
+            <li><strong>全局概览 (Overview)</strong>：实时展示集群健康度与基础负载。包含在线节点/GPU总数、已分配算力、运行与排队任务数，以及已分配但闲置的GPU（Idle Allocated）等核心能效指标。</li>
+            <li><strong>配额与弹性管理 (Quota Management)</strong>：支持多租户（项目/团队）配额管理。通过“配额内 (In quota)”与“超配额 (Over quota)”设计，允许团队在集群空闲时超越配额运行任务，并在有高优先任务时由系统自动抢占和收回，实现算力弹性共享。</li>
+            <li><strong>多维度性能监控 (Deep Analytics)</strong>：深度集成开源监控标准（如 Grafana），从项目级、集群级提供秒级高精度指标。重点展示 <strong>“资源分配率 (Allocation)”</strong> 与 <strong>“实际利用率 (Utilization)”</strong> 的对比趋势（涵盖 GPU 计算、显存、CPU 等），辅助管理员快速定位“占而不用”的资源浪费。</li>
+            <li><strong>任务与资源调度 (Workload & Resource Management)</strong>：提供 AI 训练与推理任务的全生命周期管理，底层支持 <strong>GPU 动态切片技术 (Fractional GPU)</strong>，允许用户以小数级（如 0.5 卡、0.1 卡）细粒度申请和调度 GPU 算力。</li>
+          </ul>
+
+          <h4>3. 总结</h4>
+          <p>该系统是一个极度侧重“技术与运维”的 AI 集群资源调度看板，主要面向 <strong>IT 管理员、MLOps 工程师及 AI 团队负责人</strong>。其核心功能聚焦于 <strong>GPU 细粒度虚拟化切片、多租户弹性配额（支持超额运行与抢占）以及资源效能审计</strong>（强对比分配率与实际利用率）。Dashboard 的整体设计旨在通过极致的底层调度与资源监控，<strong>帮助企业最大限度压榨 GPU 算力、消除资源闲置，实现 AI 基础设施的降本增效。</strong></p>
+        
+          <!-- Run:ai 真实截图轮播画廊 -->
+          <div class="screenshots-panel">
+            <div class="screenshots-title">📸 调研文档真实截图 (共 3 张，支持点击放大):</div>
+            <div class="carousel-gallery-container">
+              <div class="carousel-track-wrapper">
+                
+                <!-- Slide 1 -->
+                <div class="carousel-slide active" onclick="openLightbox('image1.png', 'Run:ai 全局大盘概览 - 实时展示集群健康度、在线节点/GPU总数及Idle Allocated占比')">
+                  <div class="screenshot-card">
+                    <div class="screenshot-img-wrapper">
+                      <img src="image1.png" alt="Run:ai 全局大盘概览">
+                      <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+                    </div>
+                    <div class="screenshot-caption">截图 1：Run:ai 实时全局能效仪表盘 (Overview)</div>
+                  </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="carousel-slide" onclick="openLightbox('image2.png', 'Run:ai 租户配额管理 - 深度展示 In-quota 与 Over-quota 的资源划分和弹性抢占状态')">
+                  <div class="screenshot-card">
+                    <div class="screenshot-img-wrapper">
+                      <img src="image2.png" alt="Run:ai 租户配额管理">
+                      <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+                    </div>
+                    <div class="screenshot-caption">截图 2：Run:ai 多项目弹性配额管理控制台</div>
+                  </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="carousel-slide" onclick="openLightbox('image3.png', 'Run:ai 任务调度与切片 - 细粒度 Fractional GPU (小数卡) 动态申请与实时算力调度大盘')">
+                  <div class="screenshot-card">
+                    <div class="screenshot-img-wrapper">
+                      <img src="image3.png" alt="Run:ai 任务调度与切片">
+                      <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+                    </div>
+                    <div class="screenshot-caption">截图 3：Run:ai Fractional GPU 细粒度切片大盘</div>
+                  </div>
+                </div>
+
+              </div>
+              
+              <!-- 轮播控制条 -->
+              <div class="carousel-controls">
+                <button class="carousel-btn" onclick="moveCarousel(-1)">❮</button>
+                <div class="carousel-dots">
+                  <span class="carousel-dot active" onclick="setCarouselSlide(0)"></span>
+                  <span class="carousel-dot" onclick="setCarouselSlide(1)"></span>
+                  <span class="carousel-dot" onclick="setCarouselSlide(2)"></span>
+                </div>
+                <button class="carousel-btn" onclick="moveCarousel(1)">❯</button>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="i-pavo-insight">
+            <strong>💡 iPavo 落地融合启发：</strong> iPavo Dashboard 借鉴了 Run:ai 核心能效指标的精髓，将 <strong>“空闲已分配 GPU 设备”</strong> 列为核心警报卡片，让运维团队一眼看清已被申请却并未产生实际 SM 时钟主频消耗的“僵尸算力负载”，从技术底座源头为财务减负。
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Grafana -->
+      <section class="paper-section sec-grafana" id="sec-grafana">
+        <div class="sec-header">
+          <h2 class="sec-title">📊 Grafana Labs (Nvidia GPU Metrics) 硬件监控看板</h2>
+          <span class="sec-brand-badge">GPU Telemetry</span>
+        </div>
+        <div class="sec-body">
+          <h4>1. 平台核心定位</h4>
+          <p>该 Dashboard 是一个专注于 <strong>GPU 物理硬件级实时性能与健康度监控的专业看板</strong>。旨在为系统运维人员和底层开发者提供高频、高精度的单卡（或单节点）物理遥测数据，以诊断底层硬件故障、预防过热风险，并辅助进行底层的算力调优。</p>
+          
+          <h4>2. 核心功能板块</h4>
+          <ul>
+            <li><strong>基础硬件与驱动信息 (Static Hardware Info)</strong>：静态展示当前所选 GPU 的具体型号（如 GeForce RTX 2080 SUPER）、当前能耗状态（P-State，如 P8）、显卡驱动版本以及 Vbios 版本，方便快速核对硬件底座环境。</li>
+            <li><strong>实时运行状态仪表盘 (Real-time Gauges)</strong>：以极高的刷新频率，通过直观的圆环图 (Gauge) 展示 GPU 利用率、实时功耗占比、风扇转速、核心温度、显存占用率以及各类时钟频率占比，提供瞬时的性能快照。</li>
+            <li><strong>硬件降频与故障诊断 (Throttle Reasons)</strong>：<strong>独有的硬件节流 (Throttling) 状态看板。</strong>实时监控并反馈 GPU 性能受限的底层原因（如硬件过热 HW Thermal Slowdown、软件限功耗 SW Power Cap 等），是定位“计算节点掉卡”和“因过热导致训练变慢”等硬件故障的关键工具。</li>
+            <li><strong>高精度时序变化趋势 (Historical Trends)</strong>：通过细粒度的时序折线图，追踪短期内（如近 1 分钟）GPU 核心温度、风扇转速、功耗 (W)、显存分配 (MB) 以及各类核心时钟频率（如 SM Clock, Video Clock）的波动曲线，用于捕捉突发的硬件异常。</li>
+          </ul>
+
+          <h4>3. 总结</h4>
+          <p>该 Dashboard 是一个<strong>极度硬核、面向物理硬件层面的 GPU 实时监控与诊断看板</strong>，主要面向 <strong>GPU 服务器运维工程师、硬件测试人员以及系统级性能调优开发者</strong>。其功能完全侧重于 <strong>GPU 的物理健康指标、能耗散热以及底层时钟频率的瞬时监控与诊断</strong>。Dashboard 的整体设计旨在提供高透明度的硬件传感器数据，<strong>帮助运维人员实时掌握显卡的物理状态，防止硬件受损并快速排查底层算力瓶颈。</strong></p>
+
+          <!-- Grafana 真实截图 -->
+          <div class="screenshots-panel">
+            <div class="screenshots-title">📸 调研文档真实截图 (支持点击放大):</div>
+            <div class="screenshot-card" onclick="openLightbox('image4.png', 'Grafana Labs GPU Metrics - 直观展示 GPU 物理温度、实时 SM 时钟主频时序与关键的降频原因诊断 (Throttle Reasons)')">
+              <div class="screenshot-img-wrapper">
+                <img src="image4.png" alt="Grafana Labs GPU Metrics 看板">
+                <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+              </div>
+              <div class="screenshot-caption">截图 4：Grafana Nvidia GPU 传感器高精度实时监控看板</div>
+            </div>
+          </div>
+
+          <div class="i-pavo-insight">
+            <strong>💡 iPavo 落地融合启发：</strong> iPavo 的“GPU 4维利用率仪表盘”打破了传统单一利用率的局限，融合了 Grafana 对 GPU 物理维度的剖析——将 <strong>计算利用率、分配率、显存分配率与显存实际利用率</strong> 并列展示，让运维能够敏锐捕获到“显存占满但核心实际计算率极低”的能效异常。
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. NVIDIA BCM -->
+      <section class="paper-section sec-nvidia" id="sec-nvidia">
+        <div class="sec-header">
+          <h2 class="sec-title">⚙️ NVIDIA Base Command Manager (Base View) 集群管理看板</h2>
+          <span class="sec-brand-badge">DGX SUPERPOD</span>
+        </div>
+        <div class="sec-body">
+          <h4>1. 平台核心定位</h4>
+          <p>NVIDIA Base Command Manager（前身为 Bright Cluster Manager）是一个<strong>企业级超大规模 HPC/AI 集群与数据中心基础设施管理平台</strong>（常用于 DGX SuperPOD 等顶级算力底座）。其 Dashboard 旨在为系统管理员提供对物理数据中心、算力节点、底层网络及电力辅助设备的一站式、模块化监控与管控看板，保障超大集群的物理稳定与高可用性。</p>
+          
+          <h4>2. 核心功能板块</h4>
+          <ul>
+            <li><strong>全物理资产状态审计 (Device Status & Resource Status)</strong>：极度详尽的底层资产监控。不仅涵盖常规的 CPU 核心、GPU 卡状态（直观展示 Up/Down/Total 数量），还深度监控 <strong>DPU 节点、NVLink 交换机、网络交换机、乃至电源机架 (Power Shelves)</strong> 等数据中心关键辅助设备，实现全物理拓扑的状态覆盖。</li>
+            <li><strong>集群综合水位监测 (Cluster Utilization)</strong>：以时序趋势图形式呈现集群的整体资源开销。将“节点占有率 (Occupation Rate)”与 GPU、CPU、内存的整体利用率在同一时间轴上进行强对比，辅助判断集群负载分布与闲忙度。</li>
+            <li><strong>自动化健康检查与故障定位 (Health Checks)</strong>：内置全自动的集群硬件巡检机制。在看板中直接展示健康检查通过率，并以明细表形式指出具体实体（如网卡接口、NVMe 固态硬盘 SMART 信息、软件镜像状态等）的 Fail 异常，实现物理故障的秒级定位。</li>
+            <li><strong>模块化定制与控制集成 (Customizable & Control Tabs)</strong>：Dashboard 采用卡片式设计，支持自由添加小组件 (Add Widget)。顶层高度集成了系统设置、<strong>Run Command (集群远程指令下发)</strong>、端口转发等控制功能，并无缝对接 <strong>Accounting (算力计量核算) 与 Chargeback (费用分摊回刷)</strong> 等运营财务板块，打通了“监控-控制-运营”的闭环。</li>
+          </ul>
+
+          <h4>3. 总结</h4>
+          <p>该 Dashboard 是一个<strong>极度侧重“数据中心物理集群与网络运维”的超大规模算力基础设施看板</strong>，主要面向 <strong>数据中心运维专家、超算集群系统管理员 (HPC/AI Admin) 以及基础设施架构师</strong>。其功能完全侧重于 <strong>海量物理设备状态监控、网络与电力拓扑健康度检测、以及底层系统级指令管控</strong>。Dashboard 的整体设计旨在化繁为简，将极其复杂的硬件拓扑和海量设备状态精简为模块化指标，<strong>帮助运维人员以最直观的方式保障超大规模 AI 算力集群的物理稳定、网络畅通与高可用运转。</strong></p>
+
+          <!-- NVIDIA BCM 真实截图 -->
+          <div class="screenshots-panel">
+            <div class="screenshots-title">📸 调研文档真实截图 (支持点击放大):</div>
+            <div class="screenshot-card" onclick="openLightbox('image5.png', 'NVIDIA Base Command Manager - 一站式集中监控超大规模物理资产节点、NVLink交换机拓扑与自动化健康自检 (Health Checks) 的控制大盘')">
+              <div class="screenshot-img-wrapper">
+                <img src="image5.png" alt="NVIDIA BCM 大盘">
+                <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+              </div>
+              <div class="screenshot-caption">截图 5：NVIDIA Base Command Manager 物理服务器机房大盘监控看板</div>
+            </div>
+          </div>
+
+          <div class="i-pavo-insight">
+            <strong>💡 iPavo 落地融合启发：</strong> 超大算力的 AI 服务器运维必须具备“向下扎根”的本领。iPavo 规划中高度集成的 <strong>K8s云原生集群统计面板</strong>（点击“⋯”即可展开当前集群包含 containerd, Cilium, spiderpool 容器网络等深度状态）正是融合了 BCM 全物理资产一站式审计的设计精髓，为架构师实现由硬至软的全栈把控。
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ABV -->
+      <section class="paper-section sec-abv" id="sec-abv">
+        <div class="sec-header">
+          <h2 class="sec-title">🛡️ ABV AI应用观测与治理平台</h2>
+          <span class="sec-brand-badge">LLMOps Governance</span>
+        </div>
+        <div class="sec-body">
+          <h4>1. 平台核心定位</h4>
+          <p>ABV 是一个<strong>企业级 LLMOps (大语言模型运维) 与 AI 治理及效果评估平台</strong>。其 Dashboard 致力于将生成式 AI 应用 (LLM App) 的黑盒运行状态转化为业务和安全维度的可视指标。它重点围绕 <strong>“AI 业务投入产出比 (ROI)”</strong>、<strong>“AI 安全与合规 (Safety & Guardrails)”</strong> 以及 <strong>“LLM 成本控制与质量评估 (LLM Cost & Evaluation)”</strong> 展开，帮助企业在落地大模型应用时做到成本可控、内容安全、效果可度量。</p>
+          
+          <h4>2. 核心功能板块</h4>
+          <ul>
+            <li><strong>商业价值与成本核算 (AI ROI & Model Costs)</strong>：直接从业务视角展示 AI 价值。提供 <strong>“AI ROI (投资回报率)”月度预测</strong>，直观量化 AI 带来的商业收益；同时提供 <strong>“模型成本细分 (Model Costs)”</strong>，以表格形式清晰罗列不同模型（如 gemini-2.5-flash）、Token 消耗量和美元开销，辅助企业进行精细化算力成本管控。</li>
+            <li><strong>安全防御与护栏拦截 (AI Safety & Guardrail Interventions)</strong>：聚焦于生成式 AI 的合规与安全治理。提供 <strong>“AI Safety Score (安全得分，如 90%)”</strong> 和 <strong>“Guardrail Interventions (每日护栏拦截次数)”</strong> 趋势图，实时量化大模型在防幻觉、防敏感词、防恶意注入等方面的拦截表现。</li>
+            <li><strong>模型效果与质量评分 (Scores Analytics)</strong>：提供多维度的大模型输出质量跟踪。支持对特定任务（如 Story Quality）在生产环境中进行自动化评估，监测具体评估指标（如叙事清晰度 narrative clarity）的活跃状态与最近活动，实现大模型输出质量的长期追溯。</li>
+            <li><strong>全链路 LLMOps 导航 (Sidebar Navigation)</strong>：左侧展示了极具系统性的 LLM 应用管理链路，包含 Tracing（调用链路）、Prompts（提示词版本管理）、Playground（沙盒）、Gateway（网关路由）以及 Guardrails（安全护栏策略）等板块。</li>
+          </ul>
+
+          <h4>3. 总结</h4>
+          <p>该 Dashboard 是一个<strong>极度侧重“AI 业务价值、内容安全与应用级 LLMOps 运维”的上层软件级监控看板</strong>，主要面向 <strong>AI 业务负责人、大模型产品经理 (AI PM)、MLOps 工程师以及安全合规官</strong>。其功能高度聚焦于 <strong>LLM 应用的商业 ROI、Token 消耗成本、安全拦截策略以及模型制造质量评估</strong>，完全脱离了底层的 GPU 物理硬件概念。Dashboard 的整体设计旨在打破生成式 AI 的黑盒，<strong>帮助企业在大规模上线大模型应用时，提供成本精细化管理、内容安全强护栏、以及大模型效果可量化的全方位保障。</strong></p>
+
+          <!-- ABV 真实截图 -->
+          <div class="screenshots-panel">
+            <div class="screenshots-title">📸 调研文档真实截图 (支持点击放大):</div>
+            <div class="screenshot-card" onclick="openLightbox('image6.png', 'ABV AI 观测治理 - 精确展现大模型商业 ROI月度趋势、安全防御拦截次数 (Guardrail Interventions) 与 API 各模型 Tokens 细算账单')">
+              <div class="screenshot-img-wrapper">
+                <img src="image6.png" alt="ABV AI大盘">
+                <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+              </div>
+              <div class="screenshot-caption">截图 6：ABV 生成式大模型应用安全合规与 API 消费监控大盘</div>
+            </div>
+          </div>
+
+          <div class="i-pavo-insight">
+            <strong>💡 iPavo 落地融合启发：</strong> 通用云看板常常陷入纯硬件堆砌的陷阱。iPavo 打破了这一隔阂，在原型中融入了 <strong>“AI 智能运维 ROI”与“安全网关护栏干预趋势”</strong>，用直观的数据回答“上了 AI 节省了多少财务资金”和“拦截了多少提示词敏感注入”，为企业大模型落地扫平合规阻碍。
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. KubeCost -->
+      <section class="paper-section sec-kubecost" id="sec-kubecost">
+        <div class="sec-header">
+          <h2 class="sec-title">💎 KubeCost 容器云财务与成本管理平台</h2>
+          <span class="sec-brand-badge">FinOps Accounting</span>
+        </div>
+        <div class="sec-body">
+          <h4>1. 平台核心定位</h4>
+          <p>KubeCost 是一个<strong>专注于 Kubernetes (K8s) 容器集群的云财务运营与成本管理平台 (FinOps)</strong>。其 Dashboard 旨在为企业建立 K8s 容器资源与底层云账单之间的精准映射，帮助企业计量多云/混合云环境下的容器资源开销，量化算力使用效率，实现容器基础设施的精细化降本增效。</p>
+          
+          <h4>2. 核心功能板块</h4>
+          <ul>
+            <li><strong>全口径云与容器成本核算 (Unified Cost Overview)</strong>：提供直观的费用汇总指标。看板顶部将 K8s 容器内开销、外部云服务商开销 (Cloud Costs，如外部数据库、存储等) 以及“合并总成本”进行并排对比，支持多集群与多云厂商账单的宏观掌控。</li>
+            <li><strong>资源效率与降本预测 (Efficiency & Savings Tracker)</strong>：引入 <strong>“Possible Savings (潜在可节省金额)”</strong> 和 <strong>“Efficiency (算力使用效率，如 36.4%)”</strong> 指标，帮助企业快速诊断“资源超配 (Over-provisioning)”情况，直观评估当前集群资源的性价配比，并一键跳转至具体降本建议。</li>
+            <li><strong>集群级费用细分与趋势 (Cluster Breakdown & Trends)</strong>：按集群维度进行拆解。通过明细表列出各集群（如 kc-demo-prod/dev/stage）的节点数、Pod 数量以及所花费用；同时配合时序堆叠柱状图，直观展示过去一周每日总费用的波动趋势和各集群费用占比。</li>
+            <li><strong>精细化容器分账导航 (FinOps Navigation)</strong>：左侧导航栏反映了深度分账与成本优化的能力，包含 Allocations（按命名空间/Namespace、Label 费用分摊）、Assets（追踪 CPU/GPU 等物理资产费用消耗）以及 Savings（闲置规格优化）等板块。</li>
+          </ul>
+
+          <h4>3. 总结</h4>
+          <p>该 Dashboard 是一个<strong>极度侧重“IT 财务、云算力运营与 K8s 成本优化”的容器 FinOps 监控看板</strong>，主要面向 <strong>云财务主管 (FinOps Practitioner)、IT 运营总监、基础设施管理员以及 MLOps 负责人</strong>。其功能完全围绕 <strong>云账单可视化、K8s 容器多维度分账审计、闲置资源识别以及算力性价比量化</strong> 展开，脱离了硬件底层的物理参数监控。Dashboard 的整体设计旨在消除容器集群的“账单黑洞”，<strong>帮助企业以最直观的方式看清每一分算力（包括承载 AI 任务的 K8s 节点）花在哪个业务/命名空间，实现云基础设施的成本透明化与合理化。</strong></p>
+
+          <!-- KubeCost 真实截图 -->
+          <div class="screenshots-panel">
+            <div class="screenshots-title">📸 调研文档真实截图 (支持点击放大):</div>
+            <div class="screenshot-card" onclick="openLightbox('image7.png', 'KubeCost 容器账单 - 强对比各 Namespace 容器算力开销比例，并量化 Possible Savings 潜在降本空间，打通多云合并账单')">
+              <div class="screenshot-img-wrapper">
+                <img src="image7.png" alt="KubeCost 账单看板">
+                <div class="screenshot-hover-hint">🔍 点击放大查看高清原图</div>
+              </div>
+              <div class="screenshot-caption">截图 7：KubeCost 云原生多租户容器算力分账与闲置治理大盘</div>
+            </div>
+          </div>
+
+          <div class="i-pavo-insight">
+            <strong>💡 iPavo 落地融合启发：</strong> 企业上云和部署 K8s 的核心痛点是财务黑洞。iPavo Dashboard 借鉴了 KubeCost 的账单拆解理念，在最底部规划了“集群消费成本分摊”卡片，通过高频率重算各命名空间及集群的绝对账单，为管理层做算力性价比决策提供了决定性佐证。
+          </div>
+        </div>
+      </section>
+
+      <!-- 📋 对比评测矩阵 -->
+      <section class="sec-matrix-box" id="sec-matrix">
+        <div class="sec-matrix-header">
+          <h2 class="sec-matrix-title">📊 调研方案多维度评测矩阵明细表</h2>
+          <div class="matrix-filters">
+            <button class="matrix-filter-btn active" onclick="highlightDimTable('all', this)">全部展示</button>
+            <button class="matrix-filter-btn" onclick="highlightDimTable('mlops', this)">调度/虚拟化</button>
+            <button class="matrix-filter-btn" onclick="highlightDimTable('physical', this)">硬件物理监测</button>
+            <button class="matrix-filter-btn" onclick="highlightDimTable('finops', this)">云上 FinOps 财务</button>
+          </div>
+        </div>
+
+        <table class="matrix-table" id="matrixTable">
+          <thead>
+            <tr>
+              <th>调研评测平台</th>
+              <th data-dim="mlops">动态切片细粒度</th>
+              <th data-dim="mlops">弹性调度抢占</th>
+              <th data-dim="physical">时钟温度功耗</th>
+              <th data-dim="physical">Throttling 降频</th>
+              <th data-dim="finops">LLM API 安全与ROI</th>
+              <th data-dim="finops">Namespace 分账</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700; color:var(--text-dark);">🔮 Run:ai Platform</td>
+              <td data-dim="mlops"><span class="score-badge score-s9">9</span> 极佳 (动态切卡)</td>
+              <td data-dim="mlops"><span class="score-badge score-s9">9</span> 极佳 (抢占机制)</td>
+              <td data-dim="physical"><span class="score-badge score-s5">5</span> 一般 (基本监测)</td>
+              <td data-dim="physical"><span class="score-badge score-s3">3</span> 弱 (暂无自检)</td>
+              <td data-dim="finops"><span class="score-badge score-s5">5</span> 适中 (作业计量)</td>
+              <td data-dim="finops"><span class="score-badge score-s5">5</span> 适中 (资源审计)</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:var(--text-dark);">📊 Grafana GPU Metrics</td>
+              <td data-dim="mlops"><span class="score-badge score-s3">3</span> 无 (仅展示)</td>
+              <td data-dim="mlops"><span class="score-badge score-s3">3</span> 无 (无排队抢占)</td>
+              <td data-dim="physical"><span class="score-badge score-s9">9</span> 极致 (传感器级)</td>
+              <td data-dim="physical"><span class="score-badge score-s9">9</span> 极佳 (硬件限频)</td>
+              <td data-dim="finops"><span class="score-badge score-s3">3</span> 无 (不涉及业务)</td>
+              <td data-dim="finops"><span class="score-badge score-s3">3</span> 无 (无账单拆解)</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:var(--text-dark);">⚙️ Base Command Manager</td>
+              <td data-dim="mlops"><span class="score-badge score-s7">7</span> 良好 (官方支持)</td>
+              <td data-dim="mlops"><span class="score-badge score-s7">7</span> 良好 (基本调度)</td>
+              <td data-dim="physical"><span class="score-badge score-s7">7</span> 良好 (交换机电力)</td>
+              <td data-dim="physical"><span class="score-badge score-s7">7</span> 良好 (健康自检)</td>
+              <td data-dim="finops"><span class="score-badge score-s5">5</span> 适中 (硬件级结算)</td>
+              <td data-dim="finops"><span class="score-badge score-s5">5</span> 适中 (裸机账单)</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:var(--text-dark);">🛡️ ABV LLMOps Board</td>
+              <td data-dim="mlops"><span class="score-badge score-s3">3</span> 无 (纯应用层)</td>
+              <td data-dim="mlops"><span class="score-badge score-s3">3</span> 无 (无调度抢占)</td>
+              <td data-dim="physical"><span class="score-badge score-s3">3</span> 无 (脱离硬件)</td>
+              <td data-dim="physical"><span class="score-badge score-s3">3</span> 无 (无硬件报错)</td>
+              <td data-dim="finops"><span class="score-badge score-s9">9</span> 极佳 (安全护栏)</td>
+              <td data-dim="finops"><span class="score-badge score-s7">7</span> 良好 (Token控制)</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:var(--text-dark);">💎 KubeCost Board</td>
+              <td data-dim="mlops"><span class="score-badge score-s3">3</span> 无 (仅K8s配额)</td>
+              <td data-dim="mlops"><span class="score-badge score-s5">5</span> 适中 (资源规格优化)</td>
+              <td data-dim="physical"><span class="score-badge score-s3">3</span> 弱 (仅记录硬件)</td>
+              <td data-dim="physical"><span class="score-badge score-s3">3</span> 弱 (无诊断反馈)</td>
+              <td data-dim="finops"><span class="score-badge score-s7">7</span> 良好 (闲置省钱预警)</td>
+              <td data-dim="finops"><span class="score-badge score-s9">9</span> 极佳 (项目多维度)</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 💡 最终洞察 -->
+      <section class="conclusion-box" id="sec-conclusion">
+        <div class="conclusion-header">💡 竞品调研最终洞察与 iPavo 综合定位建议</div>
+        <p>
+          通过对上述五个主流平台的深挖，我们得出了异构算力观测治理的核心规律：<strong>传统运维只注重硬件“物理死活”（如 Grafana），而AI业务与财务则死守“成本性价比”与“数据安全合规”（如 KubeCost、ABV），Run:ai 则是连接两者的调度桥梁。</strong>
+        </p>
+        <p style="margin-top: 10px;">
+          在当前的 iPavo 原型规划中，我们突破性地将 <strong>“物理四维监控”（Grafana/BCM 灵感）</strong>、<strong>“AI 智能运维 ROI 与网关护栏”（ABV 灵感）</strong> 以及 <strong>“多集群多维度 FinOps 分账”（KubeCost 灵感）</strong> 在单一仪表盘中并轨联展。这一全栈视角的深度融合极好地兼顾了“MLOps 技术效能”与“财务及业务运营 ROI”，打破了过去观测黑盒的壁垒，构成了 iPavo 原型在政企大客户及多部门联合汇报场景下的<strong>核心降本增效护城河</strong>！
+        </p>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ============================================================ -->
+  /* Lightbox 图片缩放浮层 (HTML Injection) */
+  <!-- ============================================================ -->
+  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
+    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <div class="lightbox-content-box" onclick="event.stopPropagation()">
+      <img src="" alt="放大图片" class="lightbox-img" id="lightboxImg">
+    </div>
+    <div class="lightbox-caption" id="lightboxCaption" onclick="event.stopPropagation()">图片描述</div>
+  </div>
+
+  <script>
+    // ============================================================
+    // Run:ai Carousel 轮播大盘控制逻辑
+    // ============================================================
+    let carouselIdx = 0;
+    const slides = document.querySelectorAll(".carousel-slide");
+    const dots = document.querySelectorAll(".carousel-dot");
+
+    function setCarouselSlide(idx) {
+      carouselIdx = idx;
+      slides.forEach((slide, sIdx) => {
+        if (sIdx === idx) {
+          slide.classList.add("active");
+        } else {
+          slide.classList.remove("active");
+        }
+      });
+      dots.forEach((dot, dIdx) => {
+        if (dIdx === idx) {
+          dot.classList.add("active");
+        } else {
+          dot.classList.remove("active");
+        }
+      });
+    }
+
+    function moveCarousel(direction) {
+      let nextIdx = carouselIdx + direction;
+      if (nextIdx < 0) nextIdx = slides.length - 1;
+      if (nextIdx >= slides.length) nextIdx = 0;
+      setCarouselSlide(nextIdx);
+    }
+
+    // ============================================================
+    // Lightbox 全屏放大图像查看器控制逻辑
+    // ============================================================
+    const modal = document.getElementById("lightboxModal");
+    const modalImg = document.getElementById("lightboxImg");
+    const modalCaption = document.getElementById("lightboxCaption");
+
+    function openLightbox(imgSrc, captionText) {
+      modalImg.src = imgSrc;
+      modalCaption.innerText = captionText;
+      modal.style.display = "flex";
+      // 延迟触发 active 以呈现平滑放大缩放动画
+      setTimeout(() => {
+        modal.classList.add("active");
+      }, 50);
+    }
+
+    function closeLightbox() {
+      modal.classList.remove("active");
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 250);
+    }
+
+    // ============================================================
+    // TOC Sidebar 滚动侦测高亮 (Scrollspy System)
+    // ============================================================
+    const sections = document.querySelectorAll(".paper-section, .paper-header, .sec-matrix-box, .conclusion-box");
+    const tocLinks = document.querySelectorAll(".toc-item-link");
+
+    window.addEventListener("scroll", () => {
+      let currentSectionId = "";
+      const scrollPosition = window.scrollY + 120; // 考虑 top-nav 高度和微调
+
+      sections.forEach((section) => {
+        const top = section.offsetTop;
+        const height = section.offsetHeight;
+        if (scrollPosition >= top && scrollPosition < top + height) {
+          currentSectionId = section.getAttribute("id");
+        }
+      });
+
+      if (currentSectionId) {
+        tocLinks.forEach((link) => {
+          const href = link.getAttribute("href");
+          if (href === `#${currentSectionId}` || (currentSectionId === "sec-header-id" && href === "#sec-header-id")) {
+            link.classList.add("active");
+          } else {
+            link.classList.remove("active");
+          }
+        });
+      }
+    });
+
+    // ============================================================
+    // 对比打分矩阵表格高亮过滤逻辑
+    // ============================================================
+    function highlightDimTable(dim, btn) {
+      const filterBtns = document.querySelectorAll(".matrix-filter-btn");
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const table = document.getElementById("matrixTable");
+      const ths = table.querySelectorAll("thead th");
+      const rows = table.querySelectorAll("tbody tr");
+
+      // 移除原有的高亮与透明度样式
+      table.querySelectorAll("th, td").forEach(el => {
+        el.style.background = "";
+        el.style.fontWeight = "";
+        el.style.opacity = "";
+      });
+
+      if (dim === 'all') return;
+
+      // 根据维度过滤表头
+      ths.forEach((th, idx) => {
+        const thDim = th.getAttribute("data-dim");
+        if (thDim && thDim !== dim) {
+          th.style.opacity = "0.3";
+        } else if (thDim === dim) {
+          th.style.background = "#fffbeb";
+          th.style.fontWeight = "700";
+        }
+      });
+
+      // 根据维度过滤表内容
+      rows.forEach((row) => {
+        const tds = row.querySelectorAll("td");
+        tds.forEach((td, idx) => {
+          if (idx === 0) return; // 平台列不透明度不变
+          
+          const tdDim = ths[idx].getAttribute("data-dim");
+          if (tdDim && tdDim !== dim) {
+            td.style.opacity = "0.2";
+          } else if (tdDim === dim) {
+            td.style.background = "#fffbeb";
+            td.style.fontWeight = "600";
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DaoCloud DCE 5.0 GPU iPavo Dashboard - 综合 GPU 管理与 AI 运维仪表盘">
+  <title>DCE 5.0 - GPU iPavo Dashboard</title>
+  <link rel="stylesheet" href="css/style.css?v=6">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    /* ============================================================ */
+    /* 演示批注助手样式 (Presentation Guide Annotation System)      */
+    /* ============================================================ */
+    .annotation-btn-floating {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: rgba(26, 32, 44, 0.9);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 10px 20px;
+      border-radius: 99px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .annotation-btn-floating:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+    .annotation-btn-floating.active {
+      background: linear-gradient(135deg, #f97316, #f59e0b);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
+    }
+    .annotation-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #f97316;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 100;
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 6px rgba(249, 115, 22, 0.4);
+    }
+    body.annotation-mode-active .annotation-badge {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      animation: pulseGlow 2s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 4px rgba(249, 115, 22, 0.2); }
+      100% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.7); border-color: rgba(249, 115, 22, 0.9); }
+    }
+    .annotation-badge:hover {
+      background: #f97316;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.8);
+      transform: scale(1.15);
+    }
+
+    /* 右侧批注栏样式 - 清新明亮白色主题 */
+    .annotation-sidebar {
+      position: fixed;
+      top: 0;
+      right: -380px;
+      width: 380px;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-left: 1px solid rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(20px);
+      z-index: 9990;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -8px 0 25px rgba(0, 0, 0, 0.08);
+      color: #334155;
+    }
+    body.annotation-sidebar-open .annotation-sidebar {
+      right: 0;
+    }
+    .annotation-sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      background: rgba(248, 250, 252, 0.6);
+      margin-top: 10px;
+    }
+    .annotation-sidebar-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #6d28d9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .annotation-sidebar-header p {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .annotation-sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    .annotation-sidebar-card {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+    }
+    .annotation-sidebar-card:hover {
+      background: #f8fafc;
+      border-color: rgba(249, 115, 22, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .annotation-sidebar-card.active {
+      border-color: #f97316;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.08), inset 0 0 8px rgba(249, 115, 22, 0.02);
+      background: rgba(249, 115, 22, 0.03);
+    }
+    .annotation-sidebar-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .annotation-sidebar-card .card-num {
+      width: 18px;
+      height: 18px;
+      background: #f97316;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .annotation-sidebar-card p {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .annotation-sidebar-card .tip-section {
+      font-size: 11px;
+      background: rgba(14, 165, 233, 0.03);
+      border: 1px solid rgba(14, 165, 233, 0.08);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .annotation-sidebar-card .tip-label {
+      font-weight: 700;
+      color: #0284c7;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .annotation-sidebar-card .tip-source {
+      font-size: 10px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    /* 页面宽度自适应位移 */
+    .main-content {
+      transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    body.annotation-sidebar-open .main-content {
+      margin-right: 380px !important;
+    }
+    .top-nav {
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    body.annotation-sidebar-open .top-nav {
+      width: calc(100% - 380px) !important;
+    }
+    body.annotation-sidebar-open .annotation-btn-floating {
+      right: 404px !important;
+    }
+    .card, .panel-wrapper, .panel-card, .stat-card {
+      position: relative !important;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- 顶部导航栏 -->
+<!-- ============================================================ -->
+<nav class="top-nav" id="topNav">
+  <div class="nav-left">
+    <span class="nav-hamburger">☰</span>
+    <div class="nav-logo">
+      <!-- DaoCloud Logo Image -->
+      <img src="DaoCloud_logo-1.png" alt="DaoCloud" style="height: 28px;">
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="nav-icon" title="消息">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button class="nav-icon" title="帮助">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+    <button class="nav-icon" title="通知">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="nav-badge">4</span>
+    </button>
+    <div class="nav-user">
+      <div class="nav-avatar">A</div>
+      <span>admin</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+</nav>
+
+<div class="main-content">
+
+<!-- ============================================================ -->
+<!-- 第一行：容器统计 | CPU/内存用量 | 健康状态 | 告警 -->
+<!-- ============================================================ -->
+<div class="grid-row grid-dashboard-row1" style="grid-template-columns: 1fr 1.6fr 1fr 1.2fr;">
+
+  <!-- 容器统计 -->
+  <div class="panel-wrapper">
+    <div class="panel-title">
+      <span>容器统计</span>
+      <div class="panel-controls">
+        <select class="filter-select" id="containerFilterSelect">
+          <option value="cluster">集群</option>
+          <option value="namespace">命名空间</option>
+        </select>
+        <div class="view-toggles" style="display: flex; gap: 2px; background: #edf2f7; padding: 2px; border-radius: 6px;">
+          <span id="btnHoneycomb" title="蜂巢视图" style="padding: 4px 6px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #1a202c; color: white;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12,2 16,4 16,8 12,10 8,8 8,4"/>
+              <polygon points="6,12 10,14 10,18 6,20 2,18 2,14"/>
+              <polygon points="18,12 22,14 22,18 18,20 14,18 14,14"/>
+            </svg>
+          </span>
+          <span id="btnGauge" title="码表视图" style="padding: 4px 6px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #4a5568;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 18a8 8 0 1 1 16 0"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="card card-animate container-stats panel-card" id="containerStatsCard">
+    <div id="honeycombView">
+      <div class="honeycomb-container">
+        <div class="honeycomb-grid" id="honeycombGrid"></div>
+      </div>
+      <div class="legend" id="honeycombLegend">
+        <div class="legend-item"><span class="legend-dot" style="background:#38a169;"></span> 90~100%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#68d391;"></span> 80~90%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#e53e3e;"></span> 60~80%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#c53030;"></span> 40~60%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#1a202c;"></span> 0~40%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#a0aec0;"></span> 未知</div>
+      </div>
+      <div class="container-summary-new">
+        <div class="summary-left">
+          <div class="container-summary-item">
+            <div class="label">容器组</div>
+            <div class="value" data-count="384">0</div>
+          </div>
+        </div>
+        <div class="summary-right">
+          <div class="container-summary-item border-green">
+            <div class="label">运行中</div>
+            <div class="value" data-count="315">0</div>
+          </div>
+          <div class="container-summary-item border-yellow">
+            <div class="label">其他</div>
+            <div class="value" data-count="69">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 码表视图 -->
+    <div id="gaugeView" style="display: none; flex-direction: column; padding-top: 16px; margin-bottom: 8px;">
+      <div style="position: relative; width: 100%; height: 140px; display: flex; justify-content: center;">
+        <canvas id="containerGaugeChart"></canvas>
+        <div style="position: absolute; bottom: 10px; text-align: center;">
+          <div id="gaugeTotalValue" style="font-size: 32px; font-weight: bold; color: #1a202c; line-height: 1;">384</div>
+          <div style="font-size: 13px; color: #718096; margin-top: 4px;">容器组</div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 16px; padding: 0 10px;">
+        <div style="display: flex; flex-direction: column; border-left: 2px solid #68d391; padding-left: 8px;">
+          <div style="font-size: 13px; color: #4a5568;">运行中</div>
+          <div id="gaugeRunningValue" style="font-size: 24px; font-weight: bold; color: #68d391; line-height: 1.2;">315</div>
+        </div>
+        <div style="display: flex; flex-direction: column; text-align: right; border-left: 2px solid #ed8936; padding-left: 8px;">
+          <div style="font-size: 13px; color: #4a5568; text-align: left;">其他</div>
+          <div id="gaugeOtherValue" style="font-size: 24px; font-weight: bold; color: #ed8936; line-height: 1.2; text-align: left;">69</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- CPU / 内存用量列 -->
+  <div class="panel-wrapper">
+    <div class="panel-title">CPU 用量</div>
+    <div class="card card-animate chart-area" id="cpuCard" style="padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; flex: 1 1 0; min-height: 0;">
+      <div class="chart-wrapper" style="flex: 1 1 0; height: 0; min-height: 0; position: relative;">
+        <canvas id="cpuChart"></canvas>
+      </div>
+    </div>
+    <div class="panel-title">内存用量</div>
+    <div class="card card-animate chart-area" id="memCard" style="padding: 16px; display: flex; flex-direction: column; flex: 1 1 0; min-height: 0;">
+      <div class="chart-wrapper" style="flex: 1 1 0; height: 0; min-height: 0; position: relative;">
+        <canvas id="memoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 健康状态 -->
+  <div class="panel-wrapper">
+    <div class="panel-title">健康状态</div>
+    <div class="card card-animate health-status panel-card" id="healthCard">
+    <div class="health-big-text unhealthy">不健康</div>
+    <div class="health-details">
+      <div class="health-row">
+        <div class="health-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m-7.07-15.07l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+          <span>集群</span>
+        </div>
+        <span class="health-row-value">2/3</span>
+        <span class="status-tag unhealthy">不健康</span>
+      </div>
+      <div class="health-row">
+        <div class="health-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>节点</span>
+        </div>
+        <span class="health-row-value">10/10</span>
+        <span class="status-tag healthy">健康</span>
+      </div>
+      <div class="health-row">
+        <div class="health-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span>容器组</span>
+        </div>
+        <span class="health-row-value">315/383</span>
+        <span class="status-tag healthy">健康</span>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- 告警 -->
+  <div class="panel-wrapper">
+    <div class="panel-title">告警</div>
+    <div class="card card-animate panel-card" id="alertCard">
+    <div class="alert-summary">
+      <div class="alert-item">
+        <div class="alert-icon critical">⊘</div>
+        <div class="alert-label">紧急</div>
+        <div class="alert-count critical" data-count="4">0</div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-icon warning">△</div>
+        <div class="alert-label">警告</div>
+        <div class="alert-count warning" data-count="60">0</div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-icon info">ⓘ</div>
+        <div class="alert-label">提示</div>
+        <div class="alert-count info" data-count="5">0</div>
+      </div>
+    </div>
+    <div class="alert-list" id="alertList">
+      <div class="alert-list-item">
+        <span class="alert-time">2026-05-20T08:43:53</span>
+        <span class="alert-message">NodeDiskIOSaturation:Disk IO queue (aqu-sq...</span>
+      </div>
+      <div class="alert-list-item">
+        <span class="alert-time">2026-05-20T08:43:53</span>
+        <span class="alert-message">NodeDiskIOSaturation:Disk IO queue (aqu-sq...</span>
+      </div>
+      <div class="alert-list-item">
+        <span class="alert-time">2026-05-20T08:33:09</span>
+        <span class="alert-message">CPUThrottlingHigh:70.15% throttling of CP...</span>
+      </div>
+      <div class="alert-list-item">
+        <span class="alert-time">2026-05-20T08:33:09</span>
+        <span class="alert-message">CPUThrottlingHigh:70.59% throttling of CP...</span>
+      </div>
+      <div class="alert-list-item">
+        <span class="alert-time">2026-05-20T08:33:09</span>
+        <span class="alert-message">CPUThrottlingHigh:99.91% throttling of CP...</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第二行：GPU 节点/设备统计（新增） -->
+<!-- ============================================================ -->
+<div class="section-title">GPU 资源概览</div>
+<div class="card card-animate" style="padding: 0;">
+  <div class="grid-row grid-4" id="gpuStatsRow" style="margin-bottom: 0; gap: 0;">
+    <div class="stat-card" id="gpuNodesCard" style="position: relative;">
+      <div class="stat-label">
+        就绪 / 总计 GPU 节点
+      </div>
+      <div class="stat-value"><span data-count="4">0</span>/<span data-count="4">0</span></div>
+      <a class="stat-link" href="#">所有节点</a>
+      <div style="position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--color-divider);"></div>
+    </div>
+    <div class="stat-card" id="gpuDevicesCard" style="position: relative;">
+      <div class="stat-label">
+        就绪 / 总计 GPU 设备
+      </div>
+      <div class="stat-value"><span data-count="32">0</span>/<span data-count="32">0</span></div>
+      <a class="stat-link" href="#">设备列表</a>
+      <div style="position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--color-divider);"></div>
+    </div>
+    <div class="stat-card" id="gpuAllocatedCard" style="position: relative;">
+      <div class="stat-label">已分配 GPU 设备</div>
+      <div class="stat-value"><span data-count="30.50" data-decimals="2">0</span></div>
+      <a class="stat-link" href="#">分配详情</a>
+      <div style="position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--color-divider);"></div>
+    </div>
+    <div class="stat-card" id="gpuIdleCard">
+      <div class="stat-label">
+        空闲已分配 GPU 设备
+      </div>
+      <div class="stat-value"><span data-count="0.50" data-decimals="2">0</span></div>
+      <a class="stat-link" href="#">所有工作负载</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第三行：GPU 利用率仪表盘 | 集群统计 | 功能一览 -->
+<!-- ============================================================ -->
+<div class="grid-row" style="grid-template-columns: 2fr 1fr 1fr;">
+
+  <!-- GPU 利用率仪表盘 -->
+  <div class="card card-animate" id="gpuGaugeCard">
+    <div class="card-header">
+      <span class="card-title">GPU 利用率</span>
+    </div>
+    <div class="gauge-grid">
+      <div class="gauge-item">
+        <canvas id="gaugeAllocation" class="gauge-canvas"></canvas>
+        <div class="gauge-label">GPU 分配率</div>
+      </div>
+      <div class="gauge-item">
+        <canvas id="gaugeCompute" class="gauge-canvas"></canvas>
+        <div class="gauge-label">GPU 计算利用率</div>
+      </div>
+      <div class="gauge-item">
+        <canvas id="gaugeMemAlloc" class="gauge-canvas"></canvas>
+        <div class="gauge-label">GPU 显存分配率</div>
+      </div>
+      <div class="gauge-item">
+        <canvas id="gaugeMemUtil" class="gauge-canvas"></canvas>
+        <div class="gauge-label">GPU 显存利用率</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 集群统计 -->
+  <div class="card card-animate" id="clusterStatsCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title">集群统计</span>
+    </div>
+    <div class="cluster-big-numbers">
+      <div class="cluster-number">
+        <div class="value" data-count="3">0</div>
+        <div class="label">集群</div>
+      </div>
+      <div class="cluster-number">
+        <div class="value" data-count="10">0</div>
+        <div class="label">节点</div>
+      </div>
+    </div>
+    <div class="cluster-list">
+      <div class="cluster-item">
+        <div class="cluster-item-left">
+          <div class="cluster-item-icon" style="background:transparent; color:#326ce5;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 8l3 10h14l3-10-10-6zm0 2.5l7 4-2 7H7l-2-7 7-4z"/></svg>
+          </div>
+          <span style="font-size: 14px; font-weight: 500;">network</span>
+        </div>
+        <div class="cluster-item-badges">
+          <div style="background: black; color: white; width: 16px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 2px; font-weight: bold; font-family: sans-serif; font-size: 12px; margin-right: 4px;">d</div>
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <polygon points="12,2 16,4 16,8 12,10 8,8 8,4" fill="#F4C430"/>
+            <polygon points="16,10 20,12 20,16 16,18 12,16 12,12" fill="#7D3C98"/>
+            <polygon points="8,10 12,12 12,16 8,18 4,16 4,12" fill="#3498DB"/>
+            <polygon points="12,16 16,18 16,22 12,24 8,22 8,18" fill="#E74C3C"/>
+            <polygon points="4,4 8,6 8,10 4,12 0,10 0,6" fill="#2ECC71"/>
+            <polygon points="20,4 24,6 24,10 20,12 16,10 16,6" fill="#E67E22"/>
+            <polygon points="12,8 16,10 16,14 12,16 8,14 8,10" fill="#34495E"/>
+          </svg>
+          <span class="cluster-badge apps-more-btn" style="color:#a0aec0; cursor: pointer; font-size: 14px;" data-cluster="network">⋯</span>
+        </div>
+      </div>
+      <div class="cluster-item">
+        <div class="cluster-item-left">
+          <div class="cluster-item-icon" style="background:transparent; color:#2b6cb0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16c-2 0-3-1-3-4s1-4 3-4"/><path d="M12 4C6.5 4 2 8.5 2 14s4.5 10 10 10 10-4.5 10-10"/></svg>
+          </div>
+          <span style="font-size: 14px; font-weight: 500;">kpanda-global-cluster</span>
+        </div>
+        <div class="cluster-item-badges">
+          <div style="background: black; color: white; width: 16px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 2px; font-weight: bold; font-family: sans-serif; font-size: 12px; margin-right: 4px;">d</div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2">
+            <path d="M4 14c4-4 6-4 10 0s8 0 8 0" stroke-linecap="round"/>
+            <circle cx="16" cy="11" r="1.5" fill="#000" stroke="none"/>
+            <line x1="4" y1="18" x2="20" y2="18"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 功能一览 -->
+  <div class="card card-animate" id="featureCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title">功能一览</span>
+    </div>
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-4 4-4-4"/></svg>
+          <span>容器管理</span>
+        </div>
+        <div class="feature-item-icons">
+          <span class="feature-icon-btn" title="网络">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          </span>
+          <span class="feature-icon-btn" title="消息">✉</span>
+          <span class="feature-icon-btn" title="存储">▣</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>可观测性</span>
+        </div>
+        <div class="feature-item-icons">
+          <span class="feature-icon-btn" title="监控">◎</span>
+          <span class="feature-icon-btn" title="追踪">⚡</span>
+          <span class="feature-icon-btn" title="日志">☰</span>
+          <span class="feature-icon-btn" title="告警">◉</span>
+          <span class="feature-icon-btn" title="更多">⋯</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>全局管理</span>
+        </div>
+        <div class="feature-item-icons"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第四行：资源用量（原始 4 + GPU/显存 2） -->
+<!-- ============================================================ -->
+<div class="grid-row" style="grid-template-columns: 1fr;">
+  <div class="card card-animate" id="resourceCard">
+    <div class="card-header">
+      <span class="card-title">资源用量</span>
+    </div>
+    <div class="resource-grid">
+      <!-- CPU -->
+      <div class="resource-item">
+        <div class="resource-title">CPU</div>
+        <div class="resource-chart"><canvas id="resCpu"></canvas></div>
+        <div class="resource-detail">
+          已用 9.437 core<br>总计 32 core
+        </div>
+      </div>
+      <!-- 内存 -->
+      <div class="resource-item">
+        <div class="resource-title">内存</div>
+        <div class="resource-chart"><canvas id="resMemory"></canvas></div>
+        <div class="resource-detail">
+          已用 27.09 GB<br>总计 62.74 GB
+        </div>
+      </div>
+      <!-- 容器组 -->
+      <div class="resource-item">
+        <div class="resource-title">容器组</div>
+        <div class="resource-chart"><canvas id="resPods"></canvas></div>
+        <div class="resource-detail">
+          已用 114<br>总计 200
+        </div>
+      </div>
+      <!-- 磁盘 -->
+      <div class="resource-item">
+        <div class="resource-title">磁盘</div>
+        <div class="resource-chart"><canvas id="resDisk"></canvas></div>
+        <div class="resource-detail">
+          已用 38.05 GB<br>总计 95.94 GB
+        </div>
+      </div>
+      <!-- GPU（新增） -->
+      <div class="resource-item">
+        <div class="resource-title">GPU</div>
+        <div class="resource-chart"><canvas id="resGpu"></canvas></div>
+        <div class="resource-detail">
+          已用 23.04 卡<br>总计 32 卡
+        </div>
+      </div>
+      <!-- 显存（新增） -->
+      <div class="resource-item">
+        <div class="resource-title">显存</div>
+        <div class="resource-chart"><canvas id="resVram"></canvas></div>
+        <div class="resource-detail">
+          已用 156.8 GB<br>总计 241.2 GB
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第五行：GPU by Cluster 表格 -->
+<!-- ============================================================ -->
+<div class="grid-row" id="gpuTablesRow" style="grid-template-columns: 1fr; margin-bottom: 24px;">
+
+  <!-- GPU 利用率 by Cluster -->
+  <div class="card card-animate" id="gpuAllocationTable">
+    <div class="card-header">
+      <span class="card-title" id="gpuAllocationTitle">集群/节点 GPU 利用率</span>
+    </div>
+    <div class="table-header-controls" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+      <select class="filter-select" id="gpuClusterGroupSelect" onchange="updateGpuAllocationView()" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border); background: #fff; cursor: pointer;">
+        <option value="cluster">集群</option>
+        <option value="node">节点</option>
+      </select>
+      <select class="filter-select" id="gpuClusterTimeSelect" onchange="updateGpuAllocationView()" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border); background: #fff; cursor: pointer;">
+        <option value="1h">过去 1 小时</option>
+        <option value="24h" selected>过去 24 小时</option>
+        <option value="7d">过去 7 天</option>
+      </select>
+    </div>
+    <table class="data-table" id="gpuAllocationDataTable">
+      <thead>
+        <tr>
+          <th id="gpuAllocationColHeader">集群</th>
+          <th style="cursor:pointer;" onclick="sortGpuTableByCol(1)">GPU 配额（卡） <span class="sort-indicator"></span></th>
+          <th style="cursor:pointer;" onclick="sortGpuTableByCol(2)">平均已分配 GPU (卡) <span class="sort-indicator">↓</span></th>
+          <th style="cursor:pointer;" onclick="sortGpuTableByCol(3)">平均 GPU 利用率 <span class="sort-indicator"></span></th>
+          <th style="cursor:pointer;" onclick="sortGpuTableByCol(4)">平均 GPU 显存利用率 <span class="sort-indicator"></span></th>
+          <th style="cursor:pointer;" onclick="sortGpuTableByCol(5)">工作负载 <span class="sort-indicator"></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>kc-demo-prod</td>
+          <td>10.00</td>
+          <td>7.53</td>
+          <td>
+            <div class="table-bar-cell">
+              <span>81%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:81%"></div></div>
+            </div>
+          </td>
+          <td>
+            <div class="table-bar-cell">
+              <span>88%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:88%"></div></div>
+            </div>
+          </td>
+          <td>15</td>
+        </tr>
+        <tr>
+          <td>kc-demo-dev</td>
+          <td>24.00</td>
+          <td>2.45</td>
+          <td>
+            <div class="table-bar-cell">
+              <span>35%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:35%"></div></div>
+            </div>
+          </td>
+          <td>
+            <div class="table-bar-cell">
+              <span>42%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:42%"></div></div>
+            </div>
+          </td>
+          <td>8</td>
+        </tr>
+        <tr>
+          <td>kc-demo-stage</td>
+          <td>18.00</td>
+          <td>0.80</td>
+          <td>
+            <div class="table-bar-cell">
+              <span>12%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:12%"></div></div>
+            </div>
+          </td>
+          <td>
+            <div class="table-bar-cell">
+              <span>15%</span>
+              <div class="table-bar"><div class="table-bar-fill gpu-color" style="width:15%"></div></div>
+            </div>
+          </td>
+          <td>3</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="border-top: 1px solid var(--color-divider); padding: 12px 20px; text-align: center; margin-top: auto;">
+      <a href="#" id="gpuAllocationViewAllLink" style="color: var(--color-primary); font-size: 13px; font-weight: 500;">查看所有集群 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第六行：AI 运维智能 -->
+<!-- ============================================================ -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+  <div class="section-title" style="margin-bottom: 0;">AI 运维</div>
+  
+  <div class="custom-time-picker" id="customTimePicker" style="display: flex; gap: 8px;">
+    <button class="time-picker-trigger" id="timePickerTrigger" onclick="toggleTimePicker(event)">
+      <span id="timePickerTriggerText">最近 24 小时</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 8px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
+    
+    <div class="time-picker-popover" id="timePickerPopover" style="display: none;" onclick="event.stopPropagation()">
+      <div class="time-picker-body">
+        <!-- Left Sidebar -->
+        <div class="time-picker-sidebar">
+          <div class="sidebar-title">选择时间范围</div>
+          <ul class="preset-list" id="presetList">
+            <li onclick="selectPreset('5m', '最近 5 分钟', this)">最近 5 分钟</li>
+            <li onclick="selectPreset('15m', '最近 15 分钟', this)">最近 15 分钟</li>
+            <li onclick="selectPreset('30m', '最近 30 分钟', this)">最近 30 分钟</li>
+            <li onclick="selectPreset('1h', '最近 1 小时', this)">最近 1 小时</li>
+            <li onclick="selectPreset('6h', '最近 6 小时', this)">最近 6 小时</li>
+            <li onclick="selectPreset('12h', '最近 12 小时', this)">最近 12 小时</li>
+            <li class="active" onclick="selectPreset('24h', '最近 24 小时', this)">最近 24 小时</li>
+            <li onclick="selectPreset('7d', '最近 7 天', this)">最近 7 天</li>
+          </ul>
+        </div>
+        <!-- Right Content -->
+        <div class="time-picker-content">
+          <div class="content-title">自定义时间范围</div>
+          
+          <div class="form-group">
+            <label>开始时间 - 结束时间</label>
+            <div class="range-inputs">
+              <input type="datetime-local" id="aiStartTime" onchange="markCustom()" style="cursor:pointer;" onclick="this.showPicker()">
+              <span class="separator">-</span>
+              <input type="datetime-local" id="aiEndTime" onchange="markCustom()" style="cursor:pointer;" onclick="this.showPicker()">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>采样间隔</label>
+            <select class="interval-select">
+              <option value="auto">自动</option>
+              <option value="1m">1 分钟</option>
+              <option value="5m">5 分钟</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="time-picker-footer">
+        <button class="btn-primary" onclick="confirmTimePicker()">确认</button>
+      </div>
+    </div>
+    
+    <button class="time-picker-trigger" style="padding: 6px 8px;" onclick="updateAiOpsData('refresh')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><polyline points="21 3 21 8 16 8"></polyline></svg>
+    </button>
+  </div>
+</div>
+
+<div class="grid-row grid-2" id="aiOpsRow1">
+
+  <!-- AI ROI (Monthly) -->
+  <div class="card card-animate" id="aiRoiCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title">AI ROI</span>
+    </div>
+    <div class="ai-metric-value">+￥1.2M</div>
+    <div class="chart-wrapper tall">
+      <canvas id="aiRoiChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 护栏干预统计 (Daily) -->
+  <div class="card card-animate" id="guardrailCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title">护栏干预</span>
+    </div>
+    <div class="chart-wrapper tall" style="margin-top: auto;">
+      <canvas id="guardrailChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="grid-row grid-2" id="aiOpsRow2">
+  <!-- AI Safety Score -->
+  <div class="card card-animate" id="safetyCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title" style="display: flex; align-items: center; gap: 4px;">
+        AI 安全评分
+      </span>
+    </div>
+    
+    <!-- Meta & Scan Time -->
+    <div class="safety-meta" style="margin-top: 4px;">
+      <span class="policy-version">策略版本: <span style="color: #2d3748; font-weight: 500;">v1.2.4</span></span>
+      <span class="scan-time">最后扫描: 刚刚</span>
+    </div>
+
+    <!-- Score & Trend -->
+    <div class="safety-score-section">
+      <div class="score-main">
+        <span class="safety-score-value text-emerald" id="safetyScoreValue">90</span>
+        <span class="safety-badge bg-emerald-light text-emerald border-emerald">安全</span>
+      </div>
+      <div class="safety-trend">
+        <svg class="trend-icon text-emerald" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        <span class="trend-value text-emerald">+2%</span>
+        <span class="trend-period">较上周</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="safety-main-bar">
+      <div class="bar-bg">
+        <div class="bar-fill bg-emerald" id="safetyBarFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Insight Summary -->
+    <div class="safety-insight bg-emerald-light border-emerald-light">
+      <svg class="insight-icon text-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      <div class="insight-text">
+        <p class="insight-desc">当前整体防护状态良好，未发现严重越狱尝试。</p>
+        <p class="insight-suggest"><span>优化建议: </span>建议升级 PII 脱敏词库以防范新型泄露。</p>
+      </div>
+    </div>
+
+    <!-- Sub Metrics -->
+    <div class="safety-submetrics">
+      <h4 class="submetrics-title">安全维度拆解</h4>
+      
+      <div class="submetric-item">
+        <span class="sub-name">提示词注入防御</span>
+        <div class="sub-bar-wrapper">
+          <div class="bar-bg"><div class="bar-fill bg-emerald" style="width: 95%"></div></div>
+          <span class="sub-score text-emerald">95</span>
+        </div>
+      </div>
+      
+      <div class="submetric-item">
+        <span class="sub-name">敏感数据脱敏</span>
+        <div class="sub-bar-wrapper">
+          <div class="bar-bg"><div class="bar-fill bg-amber" style="width: 82%"></div></div>
+          <span class="sub-score text-amber">82</span>
+        </div>
+      </div>
+      
+      <div class="submetric-item">
+        <span class="sub-name">内容安全合规</span>
+        <div class="sub-bar-wrapper">
+          <div class="bar-bg"><div class="bar-fill bg-emerald" style="width: 98%"></div></div>
+          <span class="sub-score text-emerald">98</span>
+        </div>
+      </div>
+      
+      <div class="submetric-item">
+        <span class="sub-name">幻觉与护栏拦截</span>
+        <div class="sub-bar-wrapper">
+          <div class="bar-bg"><div class="bar-fill bg-amber" style="width: 78%"></div></div>
+          <span class="sub-score text-amber">78</span>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Model Costs -->
+  <div class="card card-animate" id="modelCostCard">
+    <div class="card-header" style="justify-content: flex-start;">
+      <span class="card-title">模型消费</span>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="model-cost-total">￥4,984.34</div>
+      <div class="model-cost-label">
+        总消费
+      </div>
+      <table class="model-cost-table">
+        <thead>
+          <tr>
+            <th data-sort="name" class="sortable">模型 <span class="sort-icon"></span></th>
+            <th data-sort="tokens" class="sortable">Tokens <span class="sort-icon"></span></th>
+            <th data-sort="cost" class="sortable">消费 <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="modelCostTableBody">
+        </tbody>
+      </table>
+      <div class="model-pagination">
+        <span class="page-info" id="modelPageInfo">1-10 of 15</span>
+        <div class="page-controls">
+          <button class="page-btn" id="modelPrevBtn" disabled>&lt;</button>
+          <button class="page-btn" id="modelNextBtn">&gt;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 第七行：Cluster 成本分解 -->
+<!-- ============================================================ -->
+<div class="grid-row" style="grid-template-columns: 1fr;">
+  <div class="card card-animate" id="clusterBreakdownCard">
+    <div class="card-header">
+      <span class="card-title">集群消费情况</span>
+    </div>
+    <table class="data-table cluster-breakdown-table">
+      <thead>
+        <tr>
+          <th>集群</th>
+          <th data-sort="nodes" class="sortable">节点数 <span class="sort-icon"></span></th>
+          <th data-sort="pods" class="sortable">容器组数 <span class="sort-icon"></span></th>
+          <th data-sort="cost" class="sortable">消费 <span class="sort-icon"></span></th>
+        </tr>
+      </thead>
+      <tbody id="clusterCostTableBody">
+      </tbody>
+    </table>
+    <div class="model-pagination" style="margin-top: auto; padding-top: 16px;">
+      <span class="page-info" id="clusterPageInfo">1-3 of 3</span>
+      <div class="page-controls">
+        <button class="page-btn" id="clusterPrevBtn" disabled>&lt;</button>
+        <button class="page-btn" id="clusterNextBtn" disabled>&gt;</button>
+      </div>
+    </div>
+    <div style="margin-top: 16px; text-align: center;">
+      <button class="btn-primary" style="width: 100%; background: transparent; border: 1px solid var(--color-border); color: var(--color-text-primary); transition: all 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(43, 108, 176, 0.1)'" onmouseout="this.style.background='transparent'">查看所有集群</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.main-content -->
+
+<!-- Apps Popup -->
+<div id="appsPopup" class="apps-popup" style="display: none;">
+  <div class="apps-popup-header">
+    <div class="apps-popup-title-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#326ce5"><path d="M12 2L2 8l3 10h14l3-10-10-6zm0 2.5l7 4-2 7H7l-2-7 7-4z"/></svg>
+      <span class="apps-popup-title" id="appsPopupClusterName">network</span>
+    </div>
+    <span class="apps-popup-close" id="appsPopupClose">×</span>
+  </div>
+  <div class="apps-popup-content">
+    <div class="apps-popup-section-title">相关应用</div>
+    <div class="apps-popup-grid">
+      <div class="app-item">
+        <div class="app-icon">
+          <div style="background: black; color: white; width: 24px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 2px; font-weight: bold; font-family: sans-serif; font-size: 18px;">d</div>
+        </div>
+        <div class="app-name">Containerd</div>
+      </div>
+      <div class="app-item">
+        <div class="app-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24">
+            <polygon points="12,2 16,4 16,8 12,10 8,8 8,4" fill="#F4C430"/>
+            <polygon points="16,10 20,12 20,16 16,18 12,16 12,12" fill="#7D3C98"/>
+            <polygon points="8,10 12,12 12,16 8,18 4,16 4,12" fill="#3498DB"/>
+            <polygon points="12,16 16,18 16,22 12,24 8,22 8,18" fill="#E74C3C"/>
+            <polygon points="4,4 8,6 8,10 4,12 0,10 0,6" fill="#2ECC71"/>
+            <polygon points="20,4 24,6 24,10 20,12 16,10 16,6" fill="#E67E22"/>
+            <polygon points="12,8 16,10 16,14 12,16 8,14 8,10" fill="#34495E"/>
+          </svg>
+        </div>
+        <div class="app-name">Cilium</div>
+      </div>
+      <div class="app-item" style="margin-left: 12px;">
+        <div class="app-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="transparent" stroke-width="0">
+            <!-- invisible icon to reserve space like in Image 5 -->
+          </svg>
+        </div>
+        <div class="app-name" style="color: #a0aec0;">Spiderpool</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/data.js?v=2"></script>
+<script src="js/charts.js?v=3"></script>
+<script src="js/app.js?v=2"></script>
+<script>
+  let currentSortCol = 1;
+  let currentSortAsc = false;
+
+  function getGpuClusterData(timeVal) {
+    if (timeVal === '1h') {
+      return `
+        <tr><td>kc-demo-prod</td><td>10.00</td><td>7.20</td><td><div class="table-bar-cell"><span>76%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:76%"></div></div></div></td><td><div class="table-bar-cell"><span>82%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:82%"></div></div></div></td><td>15</td></tr>
+        <tr><td>kc-demo-dev</td><td>24.00</td><td>2.10</td><td><div class="table-bar-cell"><span>30%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:30%"></div></div></div></td><td><div class="table-bar-cell"><span>38%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:38%"></div></div></div></td><td>8</td></tr>
+        <tr><td>kc-demo-stage</td><td>18.00</td><td>1.00</td><td><div class="table-bar-cell"><span>15%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:15%"></div></div></div></td><td><div class="table-bar-cell"><span>18%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:18%"></div></div></div></td><td>3</td></tr>
+      `;
+    } else if (timeVal === '7d') {
+      return `
+        <tr><td>kc-demo-prod</td><td>10.00</td><td>7.85</td><td><div class="table-bar-cell"><span>85%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:85%"></div></div></div></td><td><div class="table-bar-cell"><span>90%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:90%"></div></div></div></td><td>15</td></tr>
+        <tr><td>kc-demo-dev</td><td>24.00</td><td>3.00</td><td><div class="table-bar-cell"><span>40%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:40%"></div></div></div></td><td><div class="table-bar-cell"><span>45%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:45%"></div></div></div></td><td>8</td></tr>
+        <tr><td>kc-demo-stage</td><td>18.00</td><td>0.50</td><td><div class="table-bar-cell"><span>8%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:8%"></div></div></div></td><td><div class="table-bar-cell"><span>10%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:10%"></div></div></div></td><td>3</td></tr>
+      `;
+    }
+    // 24h default
+    return `
+        <tr><td>kc-demo-prod</td><td>10.00</td><td>7.53</td><td><div class="table-bar-cell"><span>81%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:81%"></div></div></div></td><td><div class="table-bar-cell"><span>88%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:88%"></div></div></div></td><td>15</td></tr>
+        <tr><td>kc-demo-dev</td><td>24.00</td><td>2.45</td><td><div class="table-bar-cell"><span>35%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:35%"></div></div></div></td><td><div class="table-bar-cell"><span>42%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:42%"></div></div></div></td><td>8</td></tr>
+        <tr><td>kc-demo-stage</td><td>18.00</td><td>0.80</td><td><div class="table-bar-cell"><span>12%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:12%"></div></div></div></td><td><div class="table-bar-cell"><span>15%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:15%"></div></div></div></td><td>3</td></tr>
+    `;
+  }
+
+  function getGpuNodeData(timeVal) {
+    if (timeVal === '1h') {
+      return `
+        <tr><td>node-gpu-01</td><td>8.00</td><td>3.80</td><td><div class="table-bar-cell"><span>92%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:92%"></div></div></div></td><td><div class="table-bar-cell"><span>85%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:85%"></div></div></div></td><td>5</td></tr>
+        <tr><td>node-gpu-02</td><td>4.00</td><td>1.90</td><td><div class="table-bar-cell"><span>55%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:55%"></div></div></div></td><td><div class="table-bar-cell"><span>50%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:50%"></div></div></div></td><td>3</td></tr>
+        <tr><td>node-gpu-03</td><td>4.00</td><td>1.50</td><td><div class="table-bar-cell"><span>38%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:38%"></div></div></div></td><td><div class="table-bar-cell"><span>42%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:42%"></div></div></div></td><td>2</td></tr>
+      `;
+    } else if (timeVal === '7d') {
+      return `
+        <tr><td>node-gpu-01</td><td>8.00</td><td>4.20</td><td><div class="table-bar-cell"><span>97%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:97%"></div></div></div></td><td><div class="table-bar-cell"><span>94%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:94%"></div></div></div></td><td>5</td></tr>
+        <tr><td>node-gpu-02</td><td>4.00</td><td>2.50</td><td><div class="table-bar-cell"><span>65%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:65%"></div></div></div></td><td><div class="table-bar-cell"><span>62%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:62%"></div></div></div></td><td>3</td></tr>
+        <tr><td>node-gpu-03</td><td>4.00</td><td>1.80</td><td><div class="table-bar-cell"><span>45%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:45%"></div></div></div></td><td><div class="table-bar-cell"><span>48%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:48%"></div></div></div></td><td>2</td></tr>
+      `;
+    }
+    // 24h default
+    return `
+        <tr><td>node-gpu-01</td><td>8.00</td><td>4.00</td><td><div class="table-bar-cell"><span>95%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:95%"></div></div></div></td><td><div class="table-bar-cell"><span>90%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:90%"></div></div></div></td><td>5</td></tr>
+        <tr><td>node-gpu-02</td><td>4.00</td><td>2.00</td><td><div class="table-bar-cell"><span>60%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:60%"></div></div></div></td><td><div class="table-bar-cell"><span>55%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:55%"></div></div></div></td><td>3</td></tr>
+        <tr><td>node-gpu-03</td><td>4.00</td><td>1.53</td><td><div class="table-bar-cell"><span>40%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:40%"></div></div></div></td><td><div class="table-bar-cell"><span>45%</span><div class="table-bar"><div class="table-bar-fill gpu-color" style="width:45%"></div></div></div></td><td>2</td></tr>
+    `;
+  }
+
+  function updateGpuAllocationView() {
+    const val = document.getElementById('gpuClusterGroupSelect').value;
+    const timeVal = document.getElementById('gpuClusterTimeSelect')?.value || '24h';
+    const header = document.getElementById('gpuAllocationColHeader');
+    const link = document.getElementById('gpuAllocationViewAllLink');
+    const tbody = document.querySelector('#gpuAllocationDataTable tbody');
+    
+    if (val === 'node') {
+      header.innerText = '节点';
+      link.innerText = '查看所有节点 →';
+      tbody.innerHTML = getGpuNodeData(timeVal);
+    } else {
+      header.innerText = '集群';
+      link.innerText = '查看所有集群 →';
+      tbody.innerHTML = getGpuClusterData(timeVal);
+    }
+    
+    // Sort descending by default for the new data
+    currentSortCol = 2;
+    currentSortAsc = false;
+    sortGpuTableByCol(2);
+  }
+
+  function sortGpuTableByCol(colIndex) {
+    const table = document.getElementById('gpuAllocationDataTable');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    if (currentSortCol === colIndex) {
+      currentSortAsc = !currentSortAsc;
+    } else {
+      currentSortCol = colIndex;
+      currentSortAsc = false; // default desc
+    }
+
+    // Update indicators
+    const headers = table.querySelectorAll('th');
+    headers.forEach((th, idx) => {
+      const ind = th.querySelector('.sort-indicator');
+      if (ind) {
+        if (idx === colIndex) {
+          ind.innerText = currentSortAsc ? '↑' : '↓';
+        } else {
+          ind.innerText = '';
+        }
+      }
+    });
+
+    rows.sort((a, b) => {
+      const getVal = (row, idx) => {
+        let text = row.cells[idx].innerText.trim();
+        if (text === '-') return 0;
+        text = text.replace('%', '');
+        return parseFloat(text) || 0;
+      };
+
+      const valA = getVal(a, colIndex);
+      const valB = getVal(b, colIndex);
+      return currentSortAsc ? (valA - valB) : (valB - valA);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  let currentPresetVal = '24h';
+  let currentPresetText = '最近 24 小时';
+
+  function toggleTimePicker(event) {
+    if (event) event.stopPropagation();
+    const popover = document.getElementById('timePickerPopover');
+    if (popover.style.display === 'none') {
+      popover.style.display = 'flex';
+    } else {
+      popover.style.display = 'none';
+    }
+  }
+
+  window.addEventListener('click', function(e) {
+    const picker = document.getElementById('customTimePicker');
+    const popover = document.getElementById('timePickerPopover');
+    if (picker && popover && !picker.contains(e.target)) {
+      popover.style.display = 'none';
+    }
+  });
+
+  function selectPreset(val, text, liElem) {
+    currentPresetVal = val;
+    currentPresetText = text;
+    
+    const list = document.getElementById('presetList');
+    const items = list.getElementsByTagName('li');
+    for(let item of items) {
+      item.classList.remove('active');
+    }
+    if(liElem) {
+      liElem.classList.add('active');
+    }
+    
+    const now = new Date();
+    let start = new Date(now);
+    if (val === '5m') start.setMinutes(now.getMinutes() - 5);
+    else if (val === '15m') start.setMinutes(now.getMinutes() - 15);
+    else if (val === '30m') start.setMinutes(now.getMinutes() - 30);
+    else if (val === '1h') start.setHours(now.getHours() - 1);
+    else if (val === '6h') start.setHours(now.getHours() - 6);
+    else if (val === '12h') start.setHours(now.getHours() - 12);
+    else if (val === '24h') start.setDate(now.getDate() - 1);
+    else if (val === '7d') start.setDate(now.getDate() - 7);
+    
+    const toDatetimeLocal = (d) => {
+      const local = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+      return local.toISOString().slice(0, 16);
+    };
+    
+    document.getElementById('aiStartTime').value = toDatetimeLocal(start);
+    document.getElementById('aiEndTime').value = toDatetimeLocal(now);
+  }
+
+  function markCustom() {
+    currentPresetVal = 'custom';
+    currentPresetText = '自定义时间范围';
+    const list = document.getElementById('presetList');
+    const items = list.getElementsByTagName('li');
+    for(let item of items) {
+      item.classList.remove('active');
+    }
+  }
+
+  function confirmTimePicker() {
+    document.getElementById('timePickerTriggerText').innerText = currentPresetText;
+    document.getElementById('timePickerPopover').style.display = 'none';
+    updateAiOpsData('confirm');
+  }
+
+  function updateAiOpsData(source) {
+    if (source === 'init') {
+      selectPreset('24h', '最近 24 小时', document.querySelector('#presetList li.active'));
+    }
+
+    const roiEl = document.querySelector('#aiRoiCard .ai-metric-value');
+    if (roiEl) {
+      if (currentPresetVal === '5m' || currentPresetVal === '15m' || currentPresetVal === '30m') roiEl.innerText = '+￥50';
+      else if (currentPresetVal === '1h') roiEl.innerText = '+￥3.2K';
+      else if (currentPresetVal === '6h' || currentPresetVal === '12h') roiEl.innerText = '+￥18.5K';
+      else if (currentPresetVal === '24h') roiEl.innerText = '+￥65.4K';
+      else if (currentPresetVal === '7d') roiEl.innerText = '+￥420K';
+      else roiEl.innerText = '+￥88.6K'; // Custom
+    }
+
+    // Dynamic Chart Updates
+    if (typeof Charts !== 'undefined' && typeof Chart !== 'undefined') {
+      const existingRoi = Chart.getChart('aiRoiChart');
+      if (existingRoi) existingRoi.destroy();
+      
+      const existingGuard = Chart.getChart('guardrailChart');
+      if (existingGuard) existingGuard.destroy();
+
+      let mockDataROI = { labels: [], data: [] };
+      let mockDataGuard = { labels: [], data: [] };
+      
+      const getLabelsByMinutes = (totalMinutes, count) => {
+        const labels = [];
+        const now = new Date();
+        const step = (totalMinutes * 60000) / (count - 1);
+        for (let i = count - 1; i >= 0; i--) {
+          const d = new Date(now.getTime() - i * step);
+          labels.push(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
+        }
+        return labels;
+      };
+
+      if (currentPresetVal === '5m') {
+        mockDataROI.labels = getLabelsByMinutes(5, 6);
+        mockDataROI.data = [0, 2, 5, 4, 10, 15];
+        mockDataGuard.labels = mockDataROI.labels;
+        mockDataGuard.data = [0, 1, 0, 0, 1, 0];
+      } else if (currentPresetVal === '15m') {
+        mockDataROI.labels = getLabelsByMinutes(15, 6);
+        mockDataROI.data = [0, 5, 8, 12, 18, 25];
+        mockDataGuard.labels = mockDataROI.labels;
+        mockDataGuard.data = [0, 1, 2, 0, 1, 0];
+      } else if (currentPresetVal === '30m') {
+        mockDataROI.labels = getLabelsByMinutes(30, 7);
+        mockDataROI.data = [0, 5, 10, 8, 20, 25, 50];
+        mockDataGuard.labels = mockDataROI.labels;
+        mockDataGuard.data = [0, 1, 0, 0, 2, 0, 1];
+      } else if (currentPresetVal === '1h') {
+        mockDataROI.labels = getLabelsByMinutes(60, 7);
+        mockDataROI.data = [100, 500, 1200, 1500, 2000, 2800, 3200];
+        mockDataGuard.labels = mockDataROI.labels;
+        mockDataGuard.data = [2, 5, 3, 8, 4, 1, 6];
+      } else if (currentPresetVal === '6h' || currentPresetVal === '12h') {
+        mockDataROI.labels = ['0h', '2h', '4h', '6h', '8h', '10h', '12h'];
+        mockDataROI.data = [3000, 5000, 8000, 12000, 15000, 17000, 18500];
+        mockDataGuard.labels = ['0h', '2h', '4h', '6h', '8h', '10h', '12h'];
+        mockDataGuard.data = [12, 15, 8, 22, 14, 9, 16];
+      } else if (currentPresetVal === '24h') {
+        mockDataROI.labels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+        mockDataROI.data = [5000, 15000, 28000, 42000, 51000, 58000, 65400];
+        mockDataGuard.labels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+        mockDataGuard.data = [20, 45, 32, 60, 48, 25, 40];
+      } else if (currentPresetVal === '7d') {
+        mockDataROI.labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        mockDataROI.data = [60000, 120000, 180000, 240000, 300000, 360000, 420000];
+        mockDataGuard.labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        mockDataGuard.data = [150, 180, 120, 210, 190, 80, 95];
+      } else {
+        mockDataROI.labels = ['1号', '5号', '10号', '15号', '20号', '25号', '30号'];
+        mockDataROI.data = [10000, 30000, 50000, 70000, 80000, 85000, 88600];
+        mockDataGuard.labels = ['1号', '5号', '10号', '15号', '20号', '25号', '30号'];
+        mockDataGuard.data = [30, 40, 20, 50, 35, 60, 40];
+      }
+
+      Charts.renderROIChart('aiRoiChart', mockDataROI);
+      Charts.renderGuardrailChart('guardrailChart', mockDataGuard);
+    }
+  }
+
+  // Initialize data on load
+  setTimeout(() => {
+    updateAiOpsData('init');
+
+    // Cluster cost table logic
+    const clusterCostData = [
+      { name: 'kc-demo-prod', nodes: 3, pods: 37, cost: 83.72 },
+      { name: 'kc-demo-dev', nodes: 1, pods: 19, cost: 38.43 },
+      { name: 'kc-demo-stage', nodes: 1, pods: 27, cost: 28.23 },
+      { name: 'kc-demo-test', nodes: 2, pods: 14, cost: 21.50 },
+      { name: 'kc-demo-edge', nodes: 1, pods: 8, cost: 12.05 }
+    ];
+
+    const cTbody = document.getElementById('clusterCostTableBody');
+    const cThs = document.querySelectorAll('.cluster-breakdown-table th.sortable');
+    const cPageInfo = document.getElementById('clusterPageInfo');
+    const cPrevBtn = document.getElementById('clusterPrevBtn');
+    const cNextBtn = document.getElementById('clusterNextBtn');
+    
+    let cSortCol = null;
+    let cSortAsc = true;
+    let cCurrentPage = 1;
+    const cPageSize = 3;
+
+    function renderClusterTable(page) {
+      if (!cTbody) return;
+      const totalPages = Math.ceil(clusterCostData.length / cPageSize) || 1;
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+      cCurrentPage = page;
+
+      cTbody.innerHTML = '';
+      
+      const start = (page - 1) * cPageSize;
+      const end = Math.min(start + cPageSize, clusterCostData.length);
+      const pageData = clusterCostData.slice(start, end);
+      
+      pageData.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.nodes}</td>
+          <td>${item.pods}</td>
+          <td>￥${item.cost.toFixed(2)}</td>
+        `;
+        cTbody.appendChild(tr);
+      });
+
+      if (cPageInfo) {
+        cPageInfo.innerText = `${cCurrentPage} / ${totalPages}`;
+      }
+      if (cPrevBtn) {
+        cPrevBtn.disabled = cCurrentPage === 1;
+        cPrevBtn.style.opacity = cCurrentPage === 1 ? '0.5' : '1';
+        cPrevBtn.style.cursor = cCurrentPage === 1 ? 'not-allowed' : 'pointer';
+      }
+      if (cNextBtn) {
+        cNextBtn.disabled = cCurrentPage === totalPages;
+        cNextBtn.style.opacity = cCurrentPage === totalPages ? '0.5' : '1';
+        cNextBtn.style.cursor = cCurrentPage === totalPages ? 'not-allowed' : 'pointer';
+      }
+    }
+
+    function sortClusterTable(colName) {
+      if (cSortCol === colName) {
+        cSortAsc = !cSortAsc;
+      } else {
+        cSortCol = colName;
+        cSortAsc = true;
+      }
+
+      clusterCostData.sort((a, b) => {
+        let valA = a[colName];
+        let valB = b[colName];
+        if (typeof valA === 'string') {
+          return cSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+          return cSortAsc ? valA - valB : valB - valA;
+        }
+      });
+
+      // Update sort indicators on headers
+      if (cThs) {
+        cThs.forEach(th => {
+          const col = th.getAttribute('data-sort');
+          const indicator = th.querySelector('.sort-indicator');
+          if (indicator) {
+            if (col === colName) {
+              indicator.innerText = cSortAsc ? '↑' : '↓';
+            } else {
+              indicator.innerText = '';
+            }
+          }
+        });
+      }
+
+      renderClusterTable(1);
+    }
+
+    if (cPrevBtn) {
+      cPrevBtn.onclick = () => {
+        if (cCurrentPage > 1) {
+          renderClusterTable(cCurrentPage - 1);
+        }
+      };
+    }
+
+    if (cNextBtn) {
+      cNextBtn.onclick = () => {
+        const totalPages = Math.ceil(clusterCostData.length / cPageSize) || 1;
+        if (cCurrentPage < totalPages) {
+          renderClusterTable(cCurrentPage + 1);
+        }
+      };
+    }
+
+    if (cThs) {
+      cThs.forEach(th => {
+        th.style.cursor = 'pointer';
+        th.onclick = () => {
+          const colName = th.getAttribute('data-sort');
+          if (colName) {
+            sortClusterTable(colName);
+          }
+        };
+      });
+    }
+
+    renderClusterTable(1);
+  }, 300);
+
+  // ============================================================
+  // 演示批注助手运行时 JavaScript
+  // ============================================================
+  (function() {
+    const annotationsData = [
+      {
+        targetId: 'gpuNodesCard',
+        title: '就绪 / 总计 GPU 节点',
+        text: '展示集群中安装并就绪了 NVIDIA 物理驱动与 Kpanda GPU 插件的节点占比，用以评估底层物理底座。',
+        value: '掌握底层物理服务器挂载状况，为运维团队规划集群容灾。',
+        source: 'Kubernetes Extended Resources (nvidia.com/gpu)'
+      },
+      {
+        targetId: 'gpuDevicesCard',
+        title: '就绪 / 总计 GPU 设备',
+        text: '由 Device Plugin 自动上报的物理 GPU 卡片（显卡实体）就绪数。',
+        value: '明确当前集群可被调度分发的最大 GPU 卡数底座。',
+        source: 'NVIDIA Device Plugin API'
+      },
+      {
+        targetId: 'gpuAllocatedCard',
+        title: '已分配 GPU 设备',
+        text: '当前已被容器组（Pods）在 YAML 中 Request 申请的 GPU 资源总量（支持小数以体现虚拟化/切卡/MIG）。',
+        value: '直观反映算力调度和分配的饱和度，作为业务是否排队或扩容硬件的直接依据。',
+        source: 'Kubernetes kube-apiserver Extended Resources'
+      },
+      {
+        targetId: 'gpuIdleCard',
+        title: '空闲已分配 GPU 设备 (浪费治理核心)',
+        text: '<strong>空闲浪费治理预警：</strong>已被业务负载 Request 占用锁死，但底层监控到其实际 GPU 计算频率（利用率）持续 5 分钟低于 5% 的资源卡数。',
+        value: '快速查杀“占着 GPU 资源却不跑任务”的算力黑洞，协助财务与业务部门进行降本提效！',
+        source: 'DCGM Exporter 实时计算率均值 ＋ Pod Spec Requests'
+      },
+      {
+        targetId: 'gpuGaugeCard',
+        title: 'GPU 4维利用率仪表盘',
+        text: '将 GPU 的物理指标拆解为四维监控：<br>1. <strong>GPU 分配率</strong>：已申请卡数 / 物理卡数<br>2. <strong>GPU 计算利用率</strong>：实际核心计算频率均值<br>3. <strong>显存分配率</strong>：已申请显存 / 物理总显存<br>4. <strong>显存利用率</strong>：实际显存消耗 / 已分配显存',
+        value: '防范“显存已分满，算力未用完”导致的盲目加卡，实现异构硬件 of 科学扩容。',
+        source: 'DCGM Exporter + Prometheus PromQL'
+      },
+      {
+        targetId: 'clusterStatsCard',
+        title: 'K8s 集群统计与应用明细',
+        text: '展现平台纳管的集群和节点总数。点击右侧的“⋯”按钮，可弹出当前集群所安装的核心云原生应用组件包（如 containerd, Cilium, spiderpool 等）。',
+        value: '方便架构师和运维人员核对集群基础应用版本。',
+        source: 'kpanda 容器管理接口 ＋ Helm Release API'
+      },
+      {
+        targetId: 'featureCard',
+        title: 'DCE 5.0 全局模块快捷导航',
+        text: 'DaoCloud 容器管理、可观测性（监控、追踪、日志、告警）以及全局设置板块的快捷跳转索引。',
+        value: '快速跳转至监控大屏或故障根因定位系统。',
+        source: 'DCE 5.0 统一网关路由'
+      },
+      {
+        targetId: 'resourceCard',
+        title: '传统与异构 6维用量进度圈',
+        text: '融合监控面板。打破壁垒，将传统系统监控（CPU、内存、Pod数、磁盘）与 GPU 异构算力监控（GPU 物理卡数、显存容量）在同一看板中并排展示。',
+        value: '支持全维度容量审计，助力企业从宏观通用服务器到 AI 服务器的算力并轨管理。',
+        source: 'Node Exporter + DCGM Exporter'
+      },
+      {
+        targetId: 'gpuAllocationTable',
+        title: '节点与集群维度 GPU 利用率表',
+        text: '下钻表单，提供 Cluster 与 Node 两个维度的聚合切换，支持一小时至七天时间窗重算。支持配额、分配卡、计算率、显存率、工作负载 5 列排序。',
+        value: '一键点击“排序”表头，即可将最繁忙或最空置的节点/集群置顶，方便指出负载异常节点。',
+        source: 'Prometheus PromQL 聚合查询 ＋ Insight 仪表盘'
+      },
+      {
+        targetId: 'aiRoiCard',
+        title: 'AI 智能运维 ROI 收益',
+        text: '量化指标。展示由 AI 智能运维（如冷热切片动态调度、算力闲置降频回收、vLLM 大模型动态扩缩）直接为企业节省的硬件折算资金。',
+        value: '直观地用“省了多少钱”量化 AI 运维产生的实际商业价值，让回报看得见！',
+        source: 'AI 运维成本核算计量微服务'
+      },
+      {
+        targetId: 'guardrailCard',
+        title: 'AI 安全网关护栏干预次数',
+        text: '大模型安全防护指标。折线图反映护栏网关在时间窗口内针对提示词注入攻击、幻觉偏离、PII 隐私信息（如身份证、API Key）泄露的紧急拦截拦截趋势。',
+        value: '保障企业大模型应用安全合规，预防安全泄露和越狱尝试。',
+        source: 'AI Safety 审计拦截日志聚合'
+      },
+      {
+        targetId: 'safetyCard',
+        title: 'AI 安全快照评分 (实时指标)',
+        text: '大模型安全打分看板（不受时间轴波动）。细分评估：注入防御(95), 敏感数据脱敏(82), 内容合规(98)以及幻觉拦截(78), 并挂载 AI 优化建议。',
+        value: '向安全官和审计部直观展示系统的 AI 安全态势。',
+        source: 'AI Safety 评估打分引擎'
+      },
+      {
+        targetId: 'modelCostCard',
+        title: '大模型 API 消费明细账单',
+        text: '展示企业内部不同大模型（GPT-4o、Claude、DeepSeek、Qwen等）调用消耗的 Tokens 总数及产生的 API 账单费用，支持字段排序与分页。',
+        value: '精确拆解企业 AI 的单项模型成本，实现按模型核算 ROI。',
+        source: 'LLM Gateway 计量网关'
+      },
+      {
+        targetId: 'clusterBreakdownCard',
+        title: '集群消费成本分摊',
+        text: '根据各集群节点的硬件规格及使用时长，由成本计量引擎加权核算出的集群绝对折算账单排行。支持升降序排序与多页翻页。',
+        value: '解决多部门、多集群资产消耗在财务层面的分摊核算与治理审计。',
+        source: 'Insight 成本核算计量微服务'
+      }
+    ];
+
+    // 全局关闭侧边栏接口
+    window.closeAnnotationSidebar = function() {
+      document.body.classList.remove('annotation-sidebar-open');
+    };
+
+    function initPresentationGuide() {
+      // 1. 创建并注入右侧批注栏 (Sidebar)
+      const sidebar = document.createElement('div');
+      sidebar.className = 'annotation-sidebar';
+      sidebar.id = 'annotationSidebar';
+      sidebar.innerHTML = `
+        <div class="annotation-sidebar-header">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #6d28d9; display: flex; align-items: center; gap: 8px;">💡 演示批注助手</h3>
+            <span class="sidebar-close-btn" onclick="closeAnnotationSidebar()" style="font-size: 22px; font-weight: bold; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s;">&times;</span>
+          </div>
+          <p style="margin: 0; font-size: 11px; color: #64748b; line-height: 1.4;">点击原型中的数字徽章，本栏将自动弹出并高亮该编号对应的详细批注内容。</p>
+        </div>
+        <div class="annotation-sidebar-content" id="annotationSidebarContent"></div>
+      `;
+      document.body.appendChild(sidebar);
+
+      const sidebarContent = document.getElementById('annotationSidebarContent');
+      annotationsData.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'annotation-sidebar-card';
+        card.id = `annotation-card-${index}`;
+        card.innerHTML = `
+          <h4><span class="card-num">${index + 1}</span> ${item.title}</h4>
+          <p>${item.text}</p>
+          <div class="tip-section">
+            <span class="tip-label">💡 亮点价值</span>
+            <span style="font-size: 11px; color: #334155;">${item.value}</span>
+          </div>
+          <div class="tip-source">📊 数据来源: ${item.source}</div>
+        `;
+        // 点击批注卡片也可以高亮对应的原型组件并闪烁
+        card.onclick = function() {
+          highlightDashboardWidget(item.targetId, index);
+        };
+        sidebarContent.appendChild(card);
+      });
+
+      // 2. 注入浮动激活按钮
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'annotation-btn-floating';
+      toggleBtn.id = 'togglePresentationBtn';
+      toggleBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span>📖 演示批注模式: 关</span>
+      `;
+      
+      toggleBtn.onclick = function() {
+        const isActive = document.body.classList.toggle('annotation-mode-active');
+        toggleBtn.classList.toggle('active', isActive);
+        if (isActive) {
+          toggleBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <span>💡 演示批注模式: 开</span>
+          `;
+          // 批注模式开启时，默认隐藏右侧批注栏 (sidebar)
+          document.body.classList.remove('annotation-sidebar-open');
+          showToastMessage("演示批注模式已开启！点击原型卡片右上角的「数字徽章」即可弹出右侧批注栏。");
+        } else {
+          toggleBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span>📖 演示批注模式: 关</span>
+          `;
+          // 关闭模式时，缩回侧边栏，清除高亮
+          closeAnnotationSidebar();
+          document.querySelectorAll('.annotation-sidebar-card').forEach(c => c.classList.remove('active'));
+        }
+      };
+      document.body.appendChild(toggleBtn);
+
+      // 3. 遍历注入页面中的数字徽章
+      annotationsData.forEach((item, index) => {
+        const container = document.getElementById(item.targetId);
+        if (!container) return;
+
+        // 创建徽章
+        const badge = document.createElement('div');
+        badge.className = 'annotation-badge';
+        badge.innerHTML = index + 1;
+
+        // 点击数字徽章，弹出侧边栏，滚动并高亮
+        badge.onclick = function(e) {
+          e.stopPropagation();
+          highlightAnnotationCard(index);
+        };
+        container.appendChild(badge);
+      });
+    }
+
+    // 高亮右侧批注栏中的卡片
+    function highlightAnnotationCard(index) {
+      // 激活展示右侧侧边栏
+      document.body.classList.add('annotation-sidebar-open');
+      
+      // 移除所有卡片的高亮
+      document.querySelectorAll('.annotation-sidebar-card').forEach(c => {
+        c.classList.remove('active');
+      });
+      
+      const card = document.getElementById(`annotation-card-${index}`);
+      if (card) {
+        card.classList.add('active');
+        // 延迟平滑滚动，以给右侧栏滑出动画充足的渲染时间
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 80);
+      }
+    }
+
+    // 点击批注卡片高亮并滚动到原型的组件
+    function highlightDashboardWidget(targetId, index) {
+      const widget = document.getElementById(targetId);
+      if (widget) {
+        // 平滑滚动到原型组件
+        const offset = 90;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elRect = widget.getBoundingClientRect().top;
+        const offsetPos = elRect - bodyRect - offset;
+
+        window.scrollTo({
+          top: offsetPos,
+          behavior: 'smooth'
+        });
+
+        // 闪烁高亮原型组件
+        widget.style.transition = 'all 0.5s';
+        widget.style.outline = '3px solid #8b5cf6';
+        widget.style.boxShadow = '0 0 25px rgba(139, 92, 246, 0.8)';
+        
+        setTimeout(() => {
+          widget.style.outline = 'none';
+          widget.style.boxShadow = 'none';
+        }, 2000);
+      }
+    }
+
+    // 简易弹层提示
+    function showToastMessage(msg) {
+      let toast = document.getElementById('annotation-toast-msg');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'annotation-toast-msg';
+        toast.style.cssText = `
+          position: fixed;
+          top: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(15, 23, 42, 0.95);
+          color: #fff;
+          border: 1px solid #8b5cf6;
+          box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-size: 13px;
+          z-index: 999999;
+          font-weight: 500;
+          pointer-events: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        `;
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+      }, 5000);
+    }
+
+    // 初始化运行
+    setTimeout(initPresentationGuide, 300);
+  })();
+</script>
+</body>
+</html>

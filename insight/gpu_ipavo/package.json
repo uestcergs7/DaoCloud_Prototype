@@ -1,0 +1,15 @@
+{
+  "name": "gpu-ipavo-prototype",
+  "version": "1.0.0",
+  "description": "GPU iPavo Dashboard and Interactive Spec Prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "author": "DaoCloud",
+  "license": "ISC"
+}
