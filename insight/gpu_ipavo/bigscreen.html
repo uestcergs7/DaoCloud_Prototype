@@ -395,11 +395,11 @@
     .health-details {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       flex-shrink: 0;
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding-bottom: 12px;
-      margin-bottom: 12px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
     }
     .health-row {
       display: flex;
@@ -445,7 +445,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       flex-shrink: 0;
     }
     .alert-summary-item {
@@ -479,6 +479,7 @@
       flex-direction: column;
       gap: 6px;
       min-height: 0;
+      max-height: 110px; /* 限制最大高度，防止撑开卡片导致溢出 */
     }
     .alert-list-item {
       background: rgba(255,255,255,0.01);
@@ -946,7 +947,7 @@
     .annotation-btn-floating {
       position: fixed;
       bottom: 24px;
-      right: 24px;
+      left: 24px; /* 移至左下角，避免遮挡右下角财务表格的分页按钮 */
       z-index: 9999;
       background: rgba(10, 14, 26, 0.95);
       color: var(--primary);
@@ -1332,7 +1333,7 @@
       <!-- GPU 4维核心利用率仪表盘 -->
       <div class="tech-panel" style="flex: 0.9;" id="gpuGaugeCard">
         <div class="tech-panel-header">
-          <span class="tech-panel-title">GPU 异构算力4维利用率仪表盘</span>
+          <span class="tech-panel-title">GPU 异构算力利用率仪表盘</span>
         </div>
         <div class="tech-panel-body" style="padding: 10px;">
           <div class="gpu-gauges-container">
@@ -2327,7 +2328,7 @@
         },
         {
           targetId: 'gpuGaugeCard',
-          title: 'GPU 4维利用率仪表盘',
+          title: 'GPU 异构算力利用率仪表盘',
           text: '将 GPU 的物理指标拆解为四维监控：<br>1. <strong>GPU 分配率</strong>：已申请卡数 / 物理卡数<br>2. <strong>GPU 计算利用率</strong>：实际核心计算频率均值<br>3. <strong>显存分配率</strong>：已申请显存 / 物理总显存<br>4. <strong>显存利用率</strong>：实际显存消耗 / 已分配显存',
           value: '防范“显存已分满，算力未用完”导致的盲目加卡，实现异构硬件 of 科学扩容。',
           source: 'DCGM Exporter + Prometheus PromQL'
