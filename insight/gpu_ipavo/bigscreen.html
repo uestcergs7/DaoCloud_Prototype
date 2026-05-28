@@ -317,6 +317,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      min-height: 100px;
+      margin-top: 12px;
       margin-bottom: 12px;
       flex-shrink: 0;
     }
@@ -479,7 +481,7 @@
       flex-direction: column;
       gap: 6px;
       min-height: 0;
-      max-height: 110px; /* 限制最大高度，防止撑开卡片导致溢出 */
+      max-height: 140px; /* 进一步增大高度限制，保证多条告警可完全呈现并顺滑滑动 */
     }
     .alert-list-item {
       background: rgba(255,255,255,0.01);
@@ -1163,10 +1165,14 @@
       <span class="metric-sub">K8s Extended Base</span>
     </div>
     <!-- 就绪显卡实体 -->
-    <div class="metric-panel" id="gpuDevicesCard">
+    <div class="metric-panel" id="gpuDevicesCard" style="padding-bottom: 8px;">
       <span class="metric-label">就绪 / 总计 GPU 设备</span>
       <span class="metric-value"><span class="glow-green">32</span> / 32</span>
-      <span class="metric-sub">NVIDIA DCGM Cards</span>
+      <div style="font-size: 13.5px; color: #fff; margin-top: 8px; display: flex; gap: 8px; font-family: var(--font-body); justify-content: flex-start; line-height: 1.4;">
+        <span style="background: rgba(16, 185, 129, 0.15); color: var(--primary); border: 2px solid var(--primary); padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 10px var(--primary-glow); text-shadow: 0 0 6px var(--primary-glow);">NVIDIA: 16卡</span>
+        <span style="background: rgba(6, 182, 212, 0.15); color: var(--secondary); border: 2px solid var(--secondary); padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 10px var(--secondary-glow); text-shadow: 0 0 6px var(--secondary-glow);">沐曦: 8卡</span>
+        <span style="background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 2px solid var(--warning); padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 10px var(--warning-glow); text-shadow: 0 0 6px var(--warning-glow);">天数: 8卡</span>
+      </div>
     </div>
     <!-- 已分配卡数 -->
     <div class="metric-panel" id="gpuAllocatedCard">
@@ -1202,7 +1208,7 @@
     <!-- 左翼栏：基础运维与负载 (Health, Metrics, Alerts) -->
     <section class="column-wing">
       <!-- 容器健康蜜蜂图与码表 -->
-      <div class="tech-panel" style="flex: 1.1;">
+      <div class="tech-panel" style="flex: 1.0;">
         <div class="tech-panel-header">
           <span class="tech-panel-title">容器组统计与能效分布</span>
           <div style="display: flex; gap: 6px; align-items: center;">
@@ -1214,7 +1220,7 @@
             <button class="btn-toggle-view" id="btnGaugeBS" onclick="toggleContainerView('gauge')">码表</button>
           </div>
         </div>
-        <div class="tech-panel-body" style="justify-content: center; padding-top: 10px;">
+        <div class="tech-panel-body" style="justify-content: flex-start; padding-top: 12px; gap: 6px;">
           <!-- 蜂巢 -->
           <div id="honeycombViewBS">
             <div class="honeycomb-container">
@@ -1259,27 +1265,25 @@
       </div>
 
       <!-- 传统资源健康及告警看板 -->
-      <div class="tech-panel" style="flex: 1;">
+      <div class="tech-panel" style="flex: 1.35;">
         <div class="tech-panel-header">
           <span class="tech-panel-title">集群健康状况与事件报警</span>
         </div>
         <div class="tech-panel-body" style="padding-top: 12px; gap: 8px;">
-          <div class="health-details">
-            <div class="health-row">
-              <div class="health-row-left">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M5 12h4m12 0h4"/></svg>
-                <span>纳管集群</span>
-              </div>
-              <span class="health-row-value">2 / 3</span>
-              <span class="status-tag unhealthy">不健康</span>
+          <div class="health-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin-bottom: 8px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 10px; border-radius: 4px;">
+              <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: var(--danger);"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M5 12h4m12 0h4"/></svg>
+                纳管集群
+              </span>
+              <span style="font-weight: bold; color: var(--danger); font-family: var(--font-clock);">2/3</span>
             </div>
-            <div class="health-row">
-              <div class="health-row-left">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
-                <span>物理节点</span>
-              </div>
-              <span class="health-row-value">10 / 10</span>
-              <span class="status-tag healthy">健康</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 4px 10px; border-radius: 4px;">
+              <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: var(--primary);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+                物理节点
+              </span>
+              <span style="font-weight: bold; color: var(--primary); font-family: var(--font-clock);">10/10</span>
             </div>
           </div>
           
@@ -1316,7 +1320,7 @@
       </div>
 
       <!-- CPU & 内存历史负载趋势 -->
-      <div class="tech-panel" style="flex: 0.9;">
+      <div class="tech-panel" style="flex: 0.65;">
         <div class="tech-panel-header">
           <span class="tech-panel-title">主机 CPU / 内存历史负载</span>
         </div>
@@ -1360,7 +1364,7 @@
       <!-- 集群/节点 GPU 实时用量矩阵 -->
       <div class="tech-panel" style="flex: 1.1;" id="gpuAllocationTable">
         <div class="tech-panel-header">
-          <span class="tech-panel-title" id="gpuAllocationTitleBS">集群 / 节点 GPU 实时用量矩阵</span>
+          <span class="tech-panel-title" id="gpuAllocationTitleBS">集群 / 节点 GPU 实时用量</span>
           <div style="display: flex; gap: 6px;">
             <select class="filter-select" id="gpuClusterGroupSelectBS" onchange="updateGpuAllocationViewBS()">
               <option value="cluster">集群</option>
@@ -1432,10 +1436,10 @@
       <!-- AI 安全评估与内容审计 -->
       <div class="tech-panel" style="flex: 1.1;" id="safetyCard">
         <div class="tech-panel-header">
-          <span class="tech-panel-title">AI 大模型安全审计与规则拦截</span>
+          <span class="tech-panel-title">AI 大模型安全评分</span>
         </div>
         <div class="tech-panel-body" style="padding: 12px 20px;">
-          <div class="safety-snapshot-box">
+          <div class="safety-snapshot-box" style="display: grid; grid-template-columns: 100px 140px 1fr; gap: 16px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; margin-bottom: 16px; flex-shrink: 0;">
             <div class="safety-score-circle-wrapper">
               <canvas id="safetyScoreCanvas" width="100" height="100"></canvas>
               <span class="safety-score-val" id="safetyScoreValBS">90</span>
@@ -1444,6 +1448,24 @@
               <span class="safety-badge-tag">SCAN PASS</span>
               <span style="font-size: 11px; color: var(--text-secondary);">策略规则: <strong style="color:#fff;">v1.2.4</strong></span>
               <span style="font-size: 10px; color: var(--text-muted);">实时打分引擎 ＋ 刚刚扫描</span>
+            </div>
+            <div class="safety-grid-inline" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-family: var(--font-body); max-width: 320px; margin-left: auto; width: 100%;">
+              <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 4px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <span style="color: var(--text-secondary);">提示词注入防御</span>
+                <span style="color: var(--primary); font-weight: bold; text-shadow: 0 0 4px var(--primary-glow);">95</span>
+              </div>
+              <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 4px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <span style="color: var(--text-secondary);">敏感数据脱敏</span>
+                <span style="color: var(--warning); font-weight: bold; text-shadow: 0 0 4px var(--warning-glow);">82</span>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 4px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <span style="color: var(--text-secondary);">内容安全合规</span>
+                <span style="color: var(--primary); font-weight: bold; text-shadow: 0 0 4px var(--primary-glow);">98</span>
+              </div>
+              <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 4px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                <span style="color: var(--text-secondary);">幻觉与护栏拦截</span>
+                <span style="color: var(--warning); font-weight: bold; text-shadow: 0 0 4px var(--warning-glow);">78</span>
+              </div>
             </div>
           </div>
 
@@ -1487,7 +1509,7 @@
       <!-- 传统与 GPU 异构资源并轨 6维用量矩阵 -->
       <div class="tech-panel" style="flex: 0.9;" id="resourceCard">
         <div class="tech-panel-header">
-          <span class="tech-panel-title" id="featureCard">异构主机资源并轨用量进度矩阵</span>
+          <span class="tech-panel-title" id="featureCard">异构主机资源并轨用量</span>
         </div>
         <div class="tech-panel-body" style="padding: 10px;">
           <div class="dimension-resource-grid">
@@ -1519,7 +1541,7 @@
             <div class="dimension-resource-item">
               <div class="doughnut-container"><canvas id="bsResGpu"></canvas></div>
               <span class="dimension-lbl">GPU</span>
-              <span class="dimension-detail-val">23.0 卡<br>共 32卡</span>
+              <span class="dimension-detail-val">已用 23.0 卡 / 共 32卡<br><span style="color:var(--text-muted); font-size: 8px;">(NV 16 | 沐曦 8 | 天数 8)</span></span>
             </div>
             <!-- VRAM -->
             <div class="dimension-resource-item">
@@ -1534,7 +1556,7 @@
       <!-- LLM Model Token billing & Cluster budget分摊 (双合一卡片) -->
       <div class="tech-panel" style="flex: 1;" id="modelCostCard">
         <div class="tech-panel-header">
-          <span class="tech-panel-title" id="clusterBreakdownCard">大模型与云集群财务核算账单</span>
+          <span class="tech-panel-title" id="clusterBreakdownCard">大模型与云集群账单</span>
           <div style="display: flex; gap: 4px;">
             <button class="btn-toggle-view active" id="btnModelTableBS" onclick="toggleFinanceTable('model')">大模型</button>
             <button class="btn-toggle-view" id="btnClusterTableBS" onclick="toggleFinanceTable('cluster')">K8s集群</button>
@@ -1569,7 +1591,6 @@
 
           <!-- Cluster Breakdown Table -->
           <div id="clusterFinanceViewBS" style="display: none; flex-direction: column; height: 100%;">
-            <div style="font-size: 18px; font-weight: bold; color: var(--secondary); text-shadow: 0 0 8px var(--secondary-glow); margin-bottom: 8px;">DCE 容器资源资产分摊</div>
             <div class="tech-table-wrapper">
               <table class="tech-data-table" id="bsClusterCostTable">
                 <thead>

@@ -453,11 +453,16 @@
       <a class="stat-link" href="#">所有节点</a>
       <div style="position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--color-divider);"></div>
     </div>
-    <div class="stat-card" id="gpuDevicesCard" style="position: relative;">
+    <div class="stat-card" id="gpuDevicesCard" style="position: relative; padding-bottom: 12px;">
       <div class="stat-label">
         就绪 / 总计 GPU 设备
       </div>
       <div class="stat-value"><span data-count="32">0</span>/<span data-count="32">0</span></div>
+      <div class="gpu-manufacturer-breakdown" style="font-size: 13.5px; color: #fff; margin: 10px 0; display: flex; gap: 8px; justify-content: center; font-family: var(--font-body);">
+        <span style="background: rgba(59, 130, 246, 0.08); color: #2563eb; border: 2px solid #3b82f6; padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); text-shadow: 0 0 2px rgba(59, 130, 246, 0.2);">NVIDIA: 16卡</span>
+        <span style="background: rgba(16, 185, 129, 0.08); color: #059669; border: 2px solid #10b981; padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 8px rgba(16, 185, 129, 0.3); text-shadow: 0 0 2px rgba(16, 185, 129, 0.2);">沐曦: 8卡</span>
+        <span style="background: rgba(245, 158, 11, 0.08); color: #d97706; border: 2px solid #f59e0b; padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); text-shadow: 0 0 2px rgba(245, 158, 11, 0.2);">天数: 8卡</span>
+      </div>
       <a class="stat-link" href="#">设备列表</a>
       <div style="position: absolute; right: 0; top: 20%; bottom: 20%; width: 1px; background: var(--color-divider);"></div>
     </div>
@@ -652,7 +657,8 @@
         <div class="resource-title">GPU</div>
         <div class="resource-chart"><canvas id="resGpu"></canvas></div>
         <div class="resource-detail">
-          已用 23.04 卡<br>总计 32 卡
+          已用 23.04 卡 / 总计 32 卡<br>
+          <span style="font-size: 9px; color: var(--color-text-muted);">(NVIDIA 16 | 沐曦 8 | 天数 8)</span>
         </div>
       </div>
       <!-- 显存（新增） -->
@@ -854,7 +860,7 @@
   <div class="card card-animate" id="safetyCard">
     <div class="card-header" style="justify-content: flex-start;">
       <span class="card-title" style="display: flex; align-items: center; gap: 4px;">
-        AI 安全评分
+        AI 大模型安全评分
       </span>
     </div>
     
@@ -865,15 +871,23 @@
     </div>
 
     <!-- Score & Trend -->
-    <div class="safety-score-section">
-      <div class="score-main">
-        <span class="safety-score-value text-emerald" id="safetyScoreValue">90</span>
-        <span class="safety-badge bg-emerald-light text-emerald border-emerald">安全</span>
+    <div class="safety-score-section" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div class="score-main">
+          <span class="safety-score-value text-emerald" id="safetyScoreValue">90</span>
+          <span class="safety-badge bg-emerald-light text-emerald border-emerald">安全</span>
+        </div>
+        <div class="safety-trend">
+          <svg class="trend-icon text-emerald" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          <span class="trend-value text-emerald">+2%</span>
+          <span class="trend-period">较上周</span>
+        </div>
       </div>
-      <div class="safety-trend">
-        <svg class="trend-icon text-emerald" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-        <span class="trend-value text-emerald">+2%</span>
-        <span class="trend-period">较上周</span>
+      <div class="safety-header-scores" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; font-family: var(--font-body); flex: 1; max-width: 280px; margin-left: auto; width: 100%;">
+        <span style="background: rgba(59, 130, 246, 0.06); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); padding: 3px 6px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between;"><span>提示词注入:</span> <span>95</span></span>
+        <span style="background: rgba(245, 158, 11, 0.06); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); padding: 3px 6px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between;"><span>敏感数据脱敏:</span> <span>82</span></span>
+        <span style="background: rgba(59, 130, 246, 0.06); color: #2563eb; border: 1px solid rgba(59, 130, 246, 0.2); padding: 3px 6px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between;"><span>内容安全合规:</span> <span>98</span></span>
+        <span style="background: rgba(245, 158, 11, 0.06); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); padding: 3px 6px; border-radius: 4px; font-weight: bold; display: flex; justify-content: space-between;"><span>幻觉与护栏拦截:</span> <span>78</span></span>
       </div>
     </div>
 
