@@ -25,9 +25,13 @@ app.get('/research', (req, res) => {
     res.sendFile(path.join(__dirname, 'research.html'));
 });
 
+app.get('/bigscreen', (req, res) => {
+    res.sendFile(path.join(__dirname, 'bigscreen.html'));
+});
+
 // 错误处理兜底
 app.use((req, res, next) => {
-    res.status(404).send('<h1>404 Not Found</h1><p>未找到请求的页面，请确认路由是否正确：</p><ul><li><a href="/dashboard">GPU 仪表盘 (Dashboard)</a></li><li><a href="/spec">功能规格说明书 (Spec)</a></li><li><a href="/research">行业调研与竞品分析 (Research)</a></li></ul>');
+    res.status(404).send('<h1>404 Not Found</h1><p>未找到请求的页面，请确认路由是否正确：</p><ul><li><a href="/dashboard">GPU 仪表盘 (Dashboard)</a></li><li><a href="/bigscreen">数据大屏 (Big Screen)</a></li><li><a href="/spec">功能规格说明书 (Spec)</a></li><li><a href="/research">行业调研与竞品分析 (Research)</a></li></ul>');
 });
 
 // 启动服务
@@ -36,6 +40,7 @@ app.listen(PORT, () => {
     console.log(`🚀 GPU iPavo 仪表盘与交互式多端服务已成功启动!`);
     console.log(`--------------------------------------------------`);
     console.log(`👉 GPU 仪表盘 (Dashboard):    http://localhost:${PORT}/dashboard`);
+    console.log(`👉 数据大屏 (Big Screen):      http://localhost:${PORT}/bigscreen`);
     console.log(`👉 交互式规格说明书 (Spec):   http://localhost:${PORT}/spec`);
     console.log(`👉 行业竞品调研报告 (Research): http://localhost:${PORT}/research`);
     console.log(`==================================================\n`);

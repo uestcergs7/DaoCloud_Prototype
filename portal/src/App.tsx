@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Server, ChevronDown, ChevronRight, Globe, Cpu, BookOpen, LineChart } from 'lucide-react';
+import { LayoutGrid, Server, ChevronDown, ChevronRight, Globe, Cpu, BookOpen, LineChart, Monitor } from 'lucide-react';
 import './App.css';
 
 // Mock data for the sidebar navigation including nested GPU iPavo sub-pages with typed array
@@ -41,6 +41,16 @@ const navigationData: any[] = [
               import.meta.env.DEV
                 ? `http://localhost:3000/dashboard`
                 : `/prototypes/gpu_ipavo/index.html`
+          },
+          {
+            id: 'gpu-ipavo-bigscreen',
+            title: '数据大屏 (Big Screen)',
+            icon: <Monitor size={16} />,
+            path: '/gpu-ipavo/bigscreen',
+            getIframeUrl: (_lang?: string) =>
+              import.meta.env.DEV
+                ? `http://localhost:3000/bigscreen`
+                : `/prototypes/gpu_ipavo/bigscreen.html`
           },
           {
             id: 'gpu-ipavo-spec',
@@ -242,6 +252,8 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
     breadcrumb = 'Kpanda / Gateway API';
   } else if (location.pathname === '/gpu-ipavo/dashboard') {
     breadcrumb = 'Insight / GPU iPavo / 监控大盘 (Dashboard)';
+  } else if (location.pathname === '/gpu-ipavo/bigscreen') {
+    breadcrumb = 'Insight / GPU iPavo / 数据大屏 (Big Screen)';
   } else if (location.pathname === '/gpu-ipavo/spec') {
     breadcrumb = 'Insight / GPU iPavo / 交互式规格说明书 (Spec)';
   } else if (location.pathname === '/gpu-ipavo/research') {
@@ -293,6 +305,7 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
           <Route path="/" element={<IframeViewer url="" lang={lang} />} />
           <Route path="/gateway-api" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
           <Route path="/gpu-ipavo/dashboard" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
+          <Route path="/gpu-ipavo/bigscreen" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
           <Route path="/gpu-ipavo/spec" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
           <Route path="/gpu-ipavo/research" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
         </Routes>

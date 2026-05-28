@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DaoCloud GPU iPavo 数据大屏 - 异构算力与 AI 运维监控中心">
+  <title>iPavo - 异构算力与 AI 运维监控数据大屏</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ============================================================ */
+    /* 核心视觉系统 (Premium Tech Cyber Black & Neon Green Theme)     */
+    /* ============================================================ */
+    :root {
+      --bg-base: #030508;
+      --bg-surface: #0a0e1a;
+      --bg-card: rgba(10, 15, 26, 0.75);
+      --border-color: rgba(16, 185, 129, 0.15);
+      --border-glow: rgba(16, 185, 129, 0.35);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      
+      --primary: #10b981;          /* Neon Green */
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --secondary: #06b6d4;        /* Tech Cyan */
+      --secondary-glow: rgba(6, 182, 212, 0.25);
+      --warning: #f59e0b;          /* Cyber Yellow */
+      --warning-glow: rgba(245, 158, 11, 0.2);
+      --danger: #ef4444;           /* Alert Red */
+      --danger-glow: rgba(239, 68, 68, 0.25);
+      
+      --font-header: 'Outfit', 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-clock: 'Share Tech Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
+      background-attachment: fixed;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.4);
+    }
+
+    /* ============================================================ */
+    /* 高科技头部大屏 Banner                                        */
+    /* ============================================================ */
+    .bigscreen-header {
+      height: 80px;
+      background: linear-gradient(180deg, rgba(10, 14, 26, 0.85) 0%, rgba(3, 5, 8, 0) 100%);
+      border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .header-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 300px;
+    }
+    .logo-img {
+      height: 24px;
+    }
+    .logo-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-family: var(--font-header);
+    }
+
+    .header-center-title {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .header-title-box {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15));
+      border: 1px solid var(--border-color);
+      box-shadow: 0 0 15px var(--primary-glow);
+      border-radius: 4px;
+      padding: 8px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header-title-box::before, .header-title-box::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-color: var(--primary);
+      border-style: solid;
+    }
+    .header-title-box::before {
+      top: 0; left: 0; border-width: 2px 0 0 2px;
+    }
+    .header-title-box::after {
+      bottom: 0; right: 0; border-width: 0 2px 2px 0;
+    }
+    .header-title-text {
+      font-family: var(--font-header);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #ffffff;
+      text-shadow: 0 0 8px var(--primary-glow);
+      background: linear-gradient(135deg, #ffffff 50%, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right-clock {
+      width: 300px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 16px;
+    }
+    .clock-display {
+      font-family: var(--font-clock);
+      font-size: 20px;
+      color: var(--primary);
+      text-shadow: 0 0 8px var(--primary-glow);
+      letter-spacing: 1px;
+    }
+
+    /* ============================================================ */
+    /* 顶部超级核心指标大牌 (Master Metrics Cards Row)                 */
+    /* ============================================================ */
+    .master-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      padding: 16px 24px 0 24px;
+      flex-shrink: 0;
+    }
+    .metric-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: all 0.3s;
+      position: relative;
+    }
+    .metric-panel:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .metric-panel::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--primary);
+      border-radius: 8px 0 0 8px;
+    }
+    .metric-panel.alert-active::before {
+      background: var(--danger);
+    }
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .metric-value {
+      font-family: var(--font-clock);
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 0 10px rgba(255,255,255,0.15);
+    }
+    .metric-value span.glow-green {
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+    .metric-value span.glow-red {
+      color: var(--danger);
+      text-shadow: 0 0 10px var(--danger-glow);
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ============================================================ */
+    /* 三栏双翼大屏布局体系 (Symmetrical Sizing Grid)                  */
+    /* ============================================================ */
+    .bigscreen-layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.55fr 1.45fr;
+      gap: 16px;
+      padding: 16px 24px 24px 24px;
+      flex: 1;
+      min-height: 0;
+      height: calc(100vh - 200px);
+    }
+
+    .column-wing {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+      height: 100%;
+    }
+
+    /* 高科技面板卡片容器 */
+    .tech-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
+      position: relative;
+      backdrop-filter: blur(16px);
+      min-height: 0;
+      transition: border-color 0.3s;
+    }
+    .tech-panel:hover {
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .tech-panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .tech-panel-title {
+      font-family: var(--font-header);
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .tech-panel-title::before {
+      content: "";
+      width: 4px;
+      height: 12px;
+      background: var(--primary);
+      box-shadow: 0 0 6px var(--primary-glow);
+      display: inline-block;
+      border-radius: 2px;
+    }
+    .tech-panel-body {
+      padding: 16px 20px;
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============================================================ */
+    /* 业务特定样式移植及黑绿重置                                      */
+    /* ============================================================ */
+
+    /* 蜂巢蜜蜂组件 */
+    .honeycomb-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .honeycomb-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 18px);
+      gap: 3px;
+    }
+    .honeycomb-hex {
+      width: 18px;
+      height: 20px;
+      background-color: #1a202c;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .honeycomb-hex:hover {
+      transform: scale(1.18);
+      z-index: 10;
+      box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    }
+    .health-excellent { background-color: var(--primary); box-shadow: 0 0 4px var(--primary-glow); }
+    .health-good { background-color: rgba(16, 185, 129, 0.6); }
+    .health-warning { background-color: var(--warning); }
+    .health-danger { background-color: var(--danger); }
+    .health-critical { background-color: #991b1b; }
+    .health-unknown { background-color: #4b5563; }
+
+    .honeycomb-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .container-summary-box {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+    .summary-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    .summary-card .val {
+      font-family: var(--font-clock);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .summary-card .lbl {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* 健康状态明细行 */
+    .health-details {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+    .health-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .health-row-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+    }
+    .health-row-left svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--primary);
+    }
+    .health-row-value {
+      font-weight: 600;
+      color: #fff;
+      font-family: var(--font-clock);
+    }
+    .status-tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .status-tag.healthy {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+    }
+    .status-tag.unhealthy {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* 告警面板 */
+    .alert-summary-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .alert-summary-item {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .alert-summary-item.critical { border-color: rgba(239, 68, 68, 0.3); color: var(--danger); }
+    .alert-summary-item.warning { border-color: rgba(245, 158, 11, 0.3); color: var(--warning); }
+    .alert-summary-item.info { border-color: rgba(6, 182, 212, 0.3); color: var(--secondary); }
+    
+    .alert-summary-item .num {
+      font-family: var(--font-clock);
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .alert-summary-item .lbl {
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .alert-list-scroller {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+    }
+    .alert-list-item {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .alert-list-item .meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+    .alert-list-item .msg {
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alert-list-item.crit { border-left: 2px solid var(--danger); }
+    .alert-list-item.warn { border-left: 2px solid var(--warning); }
+
+    /* UI控制器与下拉框 */
+    .filter-select {
+      background: #090e1a;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select:focus {
+      border-color: var(--primary);
+    }
+    .btn-toggle-view {
+      cursor: pointer;
+      padding: 3px 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .btn-toggle-view.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* GPU 核心4维利用率仪表盘 */
+    .gpu-gauges-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      flex: 1;
+      align-items: center;
+      min-height: 0;
+    }
+    .gpu-gauge-card-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .gauge-canvas {
+      width: 100%;
+      height: 110px;
+    }
+    .gauge-title-lbl {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* 6维资源用量进度圈 */
+    .dimension-resource-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      flex: 1;
+      align-items: center;
+      min-height: 0;
+    }
+    .dimension-resource-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .doughnut-container {
+      position: relative;
+      width: 70px;
+      height: 70px;
+    }
+    .dimension-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 6px;
+    }
+    .dimension-detail-val {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
+    /* 高科技暗色数据表格 */
+    .tech-table-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .tech-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: left;
+    }
+    .tech-data-table th {
+      padding: 10px 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.02);
+      font-family: var(--font-header);
+    }
+    .tech-data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text-primary);
+    }
+    .tech-data-table tr:hover td {
+      background: rgba(16, 185, 129, 0.03);
+    }
+    
+    /* 进度条单元格 */
+    .table-progress-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .table-progress-cell span {
+      width: 26px;
+      font-family: var(--font-clock);
+      font-weight: 600;
+    }
+    .progress-bar-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      box-shadow: 0 0 6px var(--primary-glow);
+      border-radius: 3px;
+    }
+
+    /* AI ROI & ROI Layout */
+    .ai-ops-main-wrapper {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+    .ai-ops-chart-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+    }
+    .roi-title-value {
+      font-family: var(--font-clock);
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--primary);
+      text-shadow: 0 0 8px var(--primary-glow);
+      margin-bottom: 6px;
+    }
+
+    /* AI 安全快照评分 */
+    .safety-snapshot-box {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 20px;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+    .safety-score-circle-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .safety-score-val {
+      position: absolute;
+      font-family: var(--font-clock);
+      font-size: 34px;
+      font-weight: bold;
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+    
+    .safety-scan-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .safety-badge-tag {
+      align-self: flex-start;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    .safety-suggest-card {
+      background: rgba(16, 185, 129, 0.03);
+      border: 1px solid rgba(16, 185, 129, 0.1);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+    .safety-suggest-card strong {
+      color: var(--primary);
+    }
+
+    .safety-dimensions-scroller {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+    .safety-dimension-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .safety-dimension-lbl-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .safety-dimension-lbl-row span.score {
+      font-family: var(--font-clock);
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    /* 集群统计应用弹出面板 (Helm component apps modal) */
+    .bs-apps-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      background: rgba(10, 15, 26, 0.95);
+      border: 1px solid var(--primary);
+      box-shadow: 0 0 25px var(--primary-glow);
+      border-radius: 8px;
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .bs-apps-modal-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .bs-apps-modal-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bs-apps-modal-close {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .bs-apps-modal-close:hover {
+      color: #fff;
+    }
+    .bs-apps-modal-body {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .bs-app-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+    .bs-app-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bs-app-name {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* 时效选择器 */
+    .time-picker-popover-bs {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 6px;
+      width: 420px;
+      background: rgba(10, 15, 26, 0.95);
+      border: 1px solid var(--primary);
+      box-shadow: 0 4px 20px var(--primary-glow);
+      border-radius: 6px;
+      display: none;
+      z-index: 2000;
+      backdrop-filter: blur(12px);
+      flex-direction: column;
+    }
+    .time-picker-popover-bs .body {
+      display: flex;
+      padding: 16px;
+      gap: 16px;
+    }
+    .time-picker-popover-bs .sidebar-list {
+      width: 140px;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      list-style: none;
+    }
+    .time-picker-popover-bs .sidebar-list li {
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .time-picker-popover-bs .sidebar-list li:hover {
+      background: rgba(255,255,255,0.02);
+      color: #fff;
+    }
+    .time-picker-popover-bs .sidebar-list li.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--primary);
+      font-weight: bold;
+    }
+    
+    .time-picker-popover-bs .right-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .time-picker-popover-bs .right-content label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .time-picker-popover-bs .right-content input {
+      background: #090e1a;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      width: 100%;
+      outline: none;
+    }
+    .time-picker-popover-bs .footer {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: flex-end;
+    }
+    
+    .btn-ui-bs {
+      background: var(--primary);
+      border: none;
+      color: #030508;
+      font-weight: bold;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .btn-ui-bs:hover {
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* 翻页器 */
+    .table-pagination-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .table-page-btn {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-secondary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .table-page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .table-page-btn:not(:disabled):hover {
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* ============================================================ */
+    /* 演示批注助手样式 (Cyber Black & Neon Green Customization)    */
+    /* ============================================================ */
+    .annotation-btn-floating {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: rgba(10, 14, 26, 0.95);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 0 15px var(--primary-glow);
+      padding: 10px 22px;
+      border-radius: 99px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .annotation-btn-floating:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px var(--primary-glow);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .annotation-btn-floating.active {
+      background: linear-gradient(135deg, #f97316, #f59e0b);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.6);
+    }
+    
+    .annotation-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #f97316;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 100;
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+    }
+    body.annotation-mode-active .annotation-badge {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      animation: pulseGlowBS 2s infinite alternate;
+    }
+    @keyframes pulseGlowBS {
+      0% { box-shadow: 0 0 4px rgba(249, 115, 22, 0.3); }
+      100% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.8); border-color: rgba(249, 115, 22, 0.9); }
+    }
+    .annotation-badge:hover {
+      background: #f97316;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(249, 115, 22, 0.9);
+      transform: scale(1.15);
+    }
+
+    /* 右侧批注栏样式 - 赛博黑绿主题 */
+    .annotation-sidebar {
+      position: fixed;
+      top: 0;
+      right: -380px;
+      width: 380px;
+      bottom: 0;
+      background: rgba(10, 14, 26, 0.96);
+      border-left: 1px solid var(--border-color);
+      backdrop-filter: blur(25px);
+      z-index: 9990;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
+      color: var(--text-primary);
+    }
+    body.annotation-sidebar-open .annotation-sidebar {
+      right: 0;
+    }
+    
+    .annotation-sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.03);
+    }
+    .annotation-sidebar-header h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .annotation-sidebar-header p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    
+    .annotation-sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .annotation-sidebar-card {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .annotation-sidebar-card:hover {
+      background: rgba(16, 185, 129, 0.02);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    .annotation-sidebar-card.active {
+      background: rgba(16, 185, 129, 0.04);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .annotation-sidebar-card h4 {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .annotation-sidebar-card h4 .card-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      color: #030508;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .annotation-sidebar-card p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .annotation-sidebar-card .tip-section {
+      background: rgba(16, 185, 129, 0.03);
+      border-left: 2px solid var(--primary);
+      padding: 8px 12px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 8px;
+    }
+    .annotation-sidebar-card .tip-label {
+      display: block;
+      font-size: 10px;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 2px;
+    }
+    .annotation-sidebar-card .tip-source {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- 顶部科技感 Header -->
+  <!-- ============================================================ -->
+  <header class="bigscreen-header">
+    <div class="header-logo-area">
+      <img src="DaoCloud_logo-1.png" alt="DaoCloud Logo" class="logo-img">
+      <span class="logo-badge">V3.0.0-PROT</span>
+    </div>
+    <div class="header-center-title">
+      <div class="header-title-box">
+        <h1 class="header-title-text">DCE 异构算力与 AI 运维监控数据大屏</h1>
+      </div>
+    </div>
+    <div class="header-right-clock">
+      <span class="clock-display" id="runningClock">2026-05-28 10:28:15 星期四</span>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- 核心度量大牌 Metric Panel Row (中心置顶)                       -->
+  <!-- ============================================================ -->
+  <section class="master-metrics-row">
+    <!-- 就绪物理节点 -->
+    <div class="metric-panel" id="gpuNodesCard">
+      <span class="metric-label">就绪 / 总计 GPU 节点</span>
+      <span class="metric-value"><span class="glow-green">4</span> / 4</span>
+      <span class="metric-sub">K8s Extended Base</span>
+    </div>
+    <!-- 就绪显卡实体 -->
+    <div class="metric-panel" id="gpuDevicesCard">
+      <span class="metric-label">就绪 / 总计 GPU 设备</span>
+      <span class="metric-value"><span class="glow-green">32</span> / 32</span>
+      <span class="metric-sub">NVIDIA DCGM Cards</span>
+    </div>
+    <!-- 已分配卡数 -->
+    <div class="metric-panel" id="gpuAllocatedCard">
+      <span class="metric-label">已分配 GPU 设备</span>
+      <span class="metric-value">30.50 <span style="font-size: 13px; color: var(--text-secondary);">卡</span></span>
+      <span class="metric-sub">Slice / Fractional MIG</span>
+    </div>
+    <!-- 空闲已分配浪费警告 -->
+    <div class="metric-panel alert-active" id="gpuIdleCard">
+      <span class="metric-label">空闲已分配 GPU 设备</span>
+      <span class="metric-value"><span class="glow-red">0.50</span> <span style="font-size: 13px; color: var(--text-secondary);">卡</span></span>
+      <span class="metric-sub">浪涌浪费治理核心预警</span>
+    </div>
+    <!-- 集群节点数 -->
+    <div class="metric-panel" id="clusterStatsCard">
+      <span class="metric-label">纳管集群与节点总数</span>
+      <span class="metric-value"><span class="glow-green" id="clusterCountVal">3</span> <span style="font-size: 13px; color: var(--text-secondary);">集群 /</span> <span class="glow-green" id="nodeCountVal">10</span> <span style="font-size: 13px; color: var(--text-secondary);">节点</span></span>
+      <span class="metric-sub">提供核心组件明细面板</span>
+    </div>
+    <!-- 紧急告警数 -->
+    <div class="metric-panel alert-active">
+      <span class="metric-label">当前未处理紧急告警</span>
+      <span class="metric-value"><span class="glow-red">4</span> <span style="font-size: 13px; color: var(--text-secondary);">条</span></span>
+      <span class="metric-sub">Disk / Throttling Events</span>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 三栏双翼大屏主布局 Grid                                       -->
+  <!-- ============================================================ -->
+  <main class="bigscreen-layout-grid">
+    
+    <!-- 左翼栏：基础运维与负载 (Health, Metrics, Alerts) -->
+    <section class="column-wing">
+      <!-- 容器健康蜜蜂图与码表 -->
+      <div class="tech-panel" style="flex: 1.1;">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">容器组统计与能效分布</span>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <select class="filter-select" id="containerGroupSelect" style="margin-right: 4px;">
+              <option value="cluster">集群</option>
+              <option value="namespace">命名空间</option>
+            </select>
+            <button class="btn-toggle-view active" id="btnHoneycombBS" onclick="toggleContainerView('honey')">蜂巢</button>
+            <button class="btn-toggle-view" id="btnGaugeBS" onclick="toggleContainerView('gauge')">码表</button>
+          </div>
+        </div>
+        <div class="tech-panel-body" style="justify-content: center; padding-top: 10px;">
+          <!-- 蜂巢 -->
+          <div id="honeycombViewBS">
+            <div class="honeycomb-container">
+              <div class="honeycomb-grid" id="honeycombGridBS">
+                <!-- JS Inject -->
+              </div>
+            </div>
+            <div class="honeycomb-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 90~100%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:rgba(16, 185, 129, 0.6);"></span> 80~90%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--warning);"></span> 60~80%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:var(--danger);"></span> 40~60%</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#4b5563;"></span> 未知</div>
+            </div>
+          </div>
+          <!-- 码表 -->
+          <div id="gaugeViewBS" style="display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 110px;">
+            <div style="position: relative; width: 140px; height: 80px; display: flex; justify-content: center;">
+              <canvas id="containerGaugeChartBS"></canvas>
+              <div style="position: absolute; bottom: 0; text-align: center;">
+                <div style="font-size: 20px; font-weight: bold; color: #fff; line-height: 1;">384</div>
+                <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">容器组</div>
+              </div>
+            </div>
+          </div>
+          <!-- 卡片汇总 -->
+          <div class="container-summary-box">
+            <div class="summary-card">
+              <div class="val">384</div>
+              <div class="lbl">容器组</div>
+            </div>
+            <div class="summary-card" style="border-bottom: 2px solid var(--primary);">
+              <div class="val" style="color: var(--primary);">315</div>
+              <div class="lbl">运行中</div>
+            </div>
+            <div class="summary-card" style="border-bottom: 2px solid var(--warning);">
+              <div class="val" style="color: var(--warning);">69</div>
+              <div class="lbl">其他异常</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 传统资源健康及告警看板 -->
+      <div class="tech-panel" style="flex: 1;">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">集群健康状况与事件报警</span>
+        </div>
+        <div class="tech-panel-body" style="padding-top: 12px; gap: 8px;">
+          <div class="health-details">
+            <div class="health-row">
+              <div class="health-row-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M5 12h4m12 0h4"/></svg>
+                <span>纳管集群</span>
+              </div>
+              <span class="health-row-value">2 / 3</span>
+              <span class="status-tag unhealthy">不健康</span>
+            </div>
+            <div class="health-row">
+              <div class="health-row-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+                <span>物理节点</span>
+              </div>
+              <span class="health-row-value">10 / 10</span>
+              <span class="status-tag healthy">健康</span>
+            </div>
+          </div>
+          
+          <div class="alert-summary-bar">
+            <div class="alert-summary-item critical">
+              <span class="num">4</span>
+              <span class="lbl">紧急</span>
+            </div>
+            <div class="alert-summary-item warning">
+              <span class="num">60</span>
+              <span class="lbl">警告</span>
+            </div>
+            <div class="alert-summary-item info">
+              <span class="num">5</span>
+              <span class="lbl">提示</span>
+            </div>
+          </div>
+
+          <div class="alert-list-scroller">
+            <div class="alert-list-item crit">
+              <div class="meta"><span>NodeDiskIOSaturation</span><span>18:02:41</span></div>
+              <div class="msg">Disk IO queue (aqu-sq) limit saturation warning in node-gpu-01</div>
+            </div>
+            <div class="alert-list-item warn">
+              <div class="meta"><span>CPUThrottlingHigh</span><span>18:00:15</span></div>
+              <div class="msg">70.15% throttling of CPU resources detected in namespace: default</div>
+            </div>
+            <div class="alert-list-item warn">
+              <div class="meta"><span>CPUThrottlingHigh</span><span>17:58:33</span></div>
+              <div class="msg">70.59% throttling of CPU resources in namespace: kube-system</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CPU & 内存历史负载趋势 -->
+      <div class="tech-panel" style="flex: 0.9;">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">主机 CPU / 内存历史负载</span>
+        </div>
+        <div class="tech-panel-body" style="padding: 10px;">
+          <div style="flex: 1; position: relative;">
+            <canvas id="hostLoadTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 中部主屏：GPU 资源与 AI ROI 核心大区 -->
+    <section class="column-wing">
+      <!-- GPU 4维核心利用率仪表盘 -->
+      <div class="tech-panel" style="flex: 0.9;" id="gpuGaugeCard">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">GPU 异构算力4维利用率仪表盘</span>
+        </div>
+        <div class="tech-panel-body" style="padding: 10px;">
+          <div class="gpu-gauges-container">
+            <div class="gpu-gauge-card-item">
+              <canvas id="gaugeAllocationBS" class="gauge-canvas"></canvas>
+              <div class="gauge-title-lbl">GPU 分配率</div>
+            </div>
+            <div class="gpu-gauge-card-item">
+              <canvas id="gaugeComputeBS" class="gauge-canvas"></canvas>
+              <div class="gauge-title-lbl">GPU 计算利用率</div>
+            </div>
+            <div class="gpu-gauge-card-item">
+              <canvas id="gaugeMemAllocBS" class="gauge-canvas"></canvas>
+              <div class="gauge-title-lbl">GPU 显存分配率</div>
+            </div>
+            <div class="gpu-gauge-card-item">
+              <canvas id="gaugeMemUtilBS" class="gauge-canvas"></canvas>
+              <div class="gauge-title-lbl">GPU 显存利用率</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 集群/节点 GPU 实时用量矩阵 -->
+      <div class="tech-panel" style="flex: 1.1;" id="gpuAllocationTable">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title" id="gpuAllocationTitleBS">集群 / 节点 GPU 实时用量矩阵</span>
+          <div style="display: flex; gap: 6px;">
+            <select class="filter-select" id="gpuClusterGroupSelectBS" onchange="updateGpuAllocationViewBS()">
+              <option value="cluster">集群</option>
+              <option value="node">节点</option>
+            </select>
+            <select class="filter-select" id="gpuClusterTimeSelectBS" onchange="updateGpuAllocationViewBS()">
+              <option value="1h">1h</option>
+              <option value="24h" selected>24h</option>
+              <option value="7d">7d</option>
+            </select>
+          </div>
+        </div>
+        <div class="tech-panel-body" style="padding: 8px 12px 14px 12px;">
+          <div class="tech-table-wrapper">
+            <table class="tech-data-table" id="gpuAllocationDataTableBS">
+              <thead>
+                <tr>
+                  <th id="gpuColHeaderBS">集群</th>
+                  <th style="cursor:pointer;" onclick="sortGpuTableBS(1)">配额 (卡)</th>
+                  <th style="cursor:pointer;" onclick="sortGpuTableBS(2)">已分配 (卡) ↓</th>
+                  <th style="cursor:pointer;" onclick="sortGpuTableBS(3)">GPU 计算率</th>
+                  <th style="cursor:pointer;" onclick="sortGpuTableBS(4)">显存使用率</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- JS Dynamic Inject -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI ROI 历史效益与护栏趋势 -->
+      <div class="tech-panel" style="flex: 1;" id="aiRoiCard">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">AI 智能运维收益 & 护栏拦截趋势</span>
+          <div style="display: flex; gap: 6px;" id="customTimePicker">
+            <select class="filter-select" id="aiTimePresetSelect" onchange="changeAiPresetBS(this.value)">
+              <option value="1h">最近 1h</option>
+              <option value="12h">最近 12h</option>
+              <option value="24h" selected>最近 24h</option>
+              <option value="7d">最近 7d</option>
+            </select>
+          </div>
+        </div>
+        <div class="tech-panel-body" style="padding: 14px 16px;">
+          <div class="ai-ops-main-wrapper">
+            <!-- Left ROI Chart -->
+            <div class="ai-ops-chart-panel">
+              <div class="roi-title-value" id="roiValueValBS">+￥65.4K</div>
+              <div style="flex: 1; position: relative;">
+                <canvas id="aiRoiChartBS"></canvas>
+              </div>
+            </div>
+            <!-- Right Guardrail Chart -->
+            <div class="ai-ops-chart-panel" id="guardrailCard">
+              <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">大模型网关安全护栏拦截频次</div>
+              <div style="flex: 1; position: relative;">
+                <canvas id="guardrailChartBS"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右翼栏：AI 安全评分与大模型成本 (Safety, Budgets, Tokens) -->
+    <section class="column-wing">
+      <!-- AI 安全评估与内容审计 -->
+      <div class="tech-panel" style="flex: 1.1;" id="safetyCard">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title">AI 大模型安全审计与规则拦截</span>
+        </div>
+        <div class="tech-panel-body" style="padding: 12px 20px;">
+          <div class="safety-snapshot-box">
+            <div class="safety-score-circle-wrapper">
+              <canvas id="safetyScoreCanvas" width="100" height="100"></canvas>
+              <span class="safety-score-val" id="safetyScoreValBS">90</span>
+            </div>
+            <div class="safety-scan-meta">
+              <span class="safety-badge-tag">SCAN PASS</span>
+              <span style="font-size: 11px; color: var(--text-secondary);">策略规则: <strong style="color:#fff;">v1.2.4</strong></span>
+              <span style="font-size: 10px; color: var(--text-muted);">实时打分引擎 ＋ 刚刚扫描</span>
+            </div>
+          </div>
+
+          <div class="safety-suggest-card">
+            💡 当前大语言网关拦截状态安全。针对新型越狱尝试，建议 <strong>更新 PII 隐私泄漏与过滤词库</strong>。
+          </div>
+
+          <div class="safety-dimensions-scroller">
+            <div class="safety-dimension-row">
+              <div class="safety-dimension-lbl-row">
+                <span>提示词注入防御</span>
+                <span class="score">95 分</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 95%"></div></div>
+            </div>
+            <div class="safety-dimension-row">
+              <div class="safety-dimension-lbl-row">
+                <span>敏感数据混淆脱敏</span>
+                <span class="score" style="color: var(--warning)">82 分</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 82%; background: var(--warning); box-shadow: 0 0 6px var(--warning-glow);"></div></div>
+            </div>
+            <div class="safety-dimension-row">
+              <div class="safety-dimension-lbl-row">
+                <span>有害合规拦截</span>
+                <span class="score">98 分</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 98%"></div></div>
+            </div>
+            <div class="safety-dimension-row">
+              <div class="safety-dimension-lbl-row">
+                <span>幻觉检测治理</span>
+                <span class="score" style="color: var(--warning)">78 分</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 78%; background: var(--warning); box-shadow: 0 0 6px var(--warning-glow);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 传统与 GPU 异构资源并轨 6维用量矩阵 -->
+      <div class="tech-panel" style="flex: 0.9;" id="resourceCard">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title" id="featureCard">异构主机资源并轨用量进度矩阵</span>
+        </div>
+        <div class="tech-panel-body" style="padding: 10px;">
+          <div class="dimension-resource-grid">
+            <!-- CPU -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResCpu"></canvas></div>
+              <span class="dimension-lbl">CPU</span>
+              <span class="dimension-detail-val">9.4 core<br>共 32c</span>
+            </div>
+            <!-- RAM -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResMemory"></canvas></div>
+              <span class="dimension-lbl">内存</span>
+              <span class="dimension-detail-val">27.1 GB<br>共 62G</span>
+            </div>
+            <!-- Pods -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResPods"></canvas></div>
+              <span class="dimension-lbl">容器组</span>
+              <span class="dimension-detail-val">114 个<br>共 200</span>
+            </div>
+            <!-- Disk -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResDisk"></canvas></div>
+              <span class="dimension-lbl">磁盘</span>
+              <span class="dimension-detail-val">38.0 GB<br>共 95G</span>
+            </div>
+            <!-- GPU -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResGpu"></canvas></div>
+              <span class="dimension-lbl">GPU</span>
+              <span class="dimension-detail-val">23.0 卡<br>共 32卡</span>
+            </div>
+            <!-- VRAM -->
+            <div class="dimension-resource-item">
+              <div class="doughnut-container"><canvas id="bsResVram"></canvas></div>
+              <span class="dimension-lbl">显存</span>
+              <span class="dimension-detail-val">156.8 G<br>共 241G</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LLM Model Token billing & Cluster budget分摊 (双合一卡片) -->
+      <div class="tech-panel" style="flex: 1;" id="modelCostCard">
+        <div class="tech-panel-header">
+          <span class="tech-panel-title" id="clusterBreakdownCard">大模型与云集群财务核算账单</span>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn-toggle-view active" id="btnModelTableBS" onclick="toggleFinanceTable('model')">大模型</button>
+            <button class="btn-toggle-view" id="btnClusterTableBS" onclick="toggleFinanceTable('cluster')">K8s集群</button>
+          </div>
+        </div>
+        <div class="tech-panel-body" style="padding: 10px 14px;">
+          <!-- Model Cost Table -->
+          <div id="modelFinanceViewBS" style="display: flex; flex-direction: column; height: 100%;">
+            <div style="font-size: 18px; font-weight: bold; color: var(--primary); text-shadow: 0 0 8px var(--primary-glow); margin-bottom: 8px;">￥4,984.34 <span style="font-size: 11px; color: var(--text-secondary); font-weight: normal;">大模型总账单</span></div>
+            <div class="tech-table-wrapper">
+              <table class="tech-data-table" id="bsModelCostTable">
+                <thead>
+                  <tr>
+                    <th style="cursor:pointer;" onclick="sortModelTableBS('model')">服务模型</th>
+                    <th style="cursor:pointer;" onclick="sortModelTableBS('tokens')">Tokens</th>
+                    <th style="cursor:pointer;" onclick="sortModelTableBS('cost')">消费金额</th>
+                  </tr>
+                </thead>
+                <tbody id="bsModelCostTableBody">
+                  <!-- JS Inject -->
+                </tbody>
+              </table>
+            </div>
+            <div class="table-pagination-row">
+              <span id="bsModelPageInfo">1-3 of 10</span>
+              <div style="display: flex; gap: 4px;">
+                <button class="table-page-btn" id="bsModelPrevBtn" onclick="changeModelPageBS(-1)">&lt;</button>
+                <button class="table-page-btn" id="bsModelNextBtn" onclick="changeModelPageBS(1)">&gt;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cluster Breakdown Table -->
+          <div id="clusterFinanceViewBS" style="display: none; flex-direction: column; height: 100%;">
+            <div style="font-size: 18px; font-weight: bold; color: var(--secondary); text-shadow: 0 0 8px var(--secondary-glow); margin-bottom: 8px;">DCE 容器资源资产分摊</div>
+            <div class="tech-table-wrapper">
+              <table class="tech-data-table" id="bsClusterCostTable">
+                <thead>
+                  <tr>
+                    <th>纳管集群</th>
+                    <th style="cursor:pointer;" onclick="sortClusterTableBS('nodes')">节点数</th>
+                    <th style="cursor:pointer;" onclick="sortClusterTableBS('pods')">容器组</th>
+                    <th style="cursor:pointer;" onclick="sortClusterTableBS('cost')">折算费用</th>
+                  </tr>
+                </thead>
+                <tbody id="bsClusterCostTableBody">
+                  <!-- JS Inject -->
+                </tbody>
+              </table>
+            </div>
+            <div class="table-pagination-row">
+              <span id="bsClusterPageInfo">1-3 of 3</span>
+              <div style="display: flex; gap: 4px;">
+                <button class="table-page-btn" id="bsClusterPrevBtn" onclick="changeClusterPageBS(-1)">&lt;</button>
+                <button class="table-page-btn" id="bsClusterNextBtn" onclick="changeClusterPageBS(1)">&gt;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Apps Detail Popup -->
+  <div id="appsPopupBS" class="bs-apps-modal">
+    <div class="bs-apps-modal-header">
+      <div class="bs-apps-modal-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2L2 8l3 10h14l3-10-10-6zm0 2.5l7 4-2 7H7l-2-7 7-4z"/></svg>
+        <span id="appsModalClusterNameBS">network</span>
+      </div>
+      <span class="bs-apps-modal-close" onclick="closeAppsModalBS()">&times;</span>
+    </div>
+    <div class="bs-apps-modal-body">
+      <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">集群就绪核心网络组件</div>
+      <div class="bs-app-item">
+        <div class="bs-app-icon">
+          <div style="background:#000; color:#fff; width:20px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:2px; font-weight:bold; font-size:14px;">d</div>
+        </div>
+        <span class="bs-app-name">Containerd Container Engine</span>
+      </div>
+      <div class="bs-app-item">
+        <div class="bs-app-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <polygon points="12,2 16,4 16,8 12,10 8,8 8,4" fill="#F4C430"/>
+            <polygon points="16,10 20,12 20,16 16,18 12,16 12,12" fill="#7D3C98"/>
+            <polygon points="8,10 12,12 12,16 8,18 4,16 4,12" fill="#3498DB"/>
+            <polygon points="12,16 16,18 16,22 12,24 8,22 8,18" fill="#E74C3C"/>
+            <polygon points="4,4 8,6 8,10 4,12 0,10 0,6" fill="#2ECC71"/>
+            <polygon points="20,4 24,6 24,10 20,12 16,10 16,6" fill="#E67E22"/>
+            <polygon points="12,8 16,10 16,14 12,16 8,14 8,10" fill="#34495E"/>
+          </svg>
+        </div>
+        <span class="bs-app-name">Cilium BPF CNI Operator</span>
+      </div>
+      <div class="bs-app-item">
+        <div class="bs-app-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <span class="bs-app-name" style="color: var(--text-muted);">Spiderpool Multus CNI</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telemetry Data & Master Controller Scripts -->
+  <script>
+    // ============================================================
+    // 时钟跑秒
+    // ============================================================
+    function updateClock() {
+      const d = new Date();
+      const pad = (v) => String(v).padStart(2, '0');
+      const weeks = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const text = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${weeks[d.getDay()]}`;
+      document.getElementById('runningClock').textContent = text;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ============================================================
+    // 蜂巢格网生成与切换
+    // ============================================================
+    function generateHoneycomb() {
+      const grid = document.getElementById('honeycombGridBS');
+      grid.innerHTML = '';
+      const cellsCount = 48;
+      const states = ['excellent', 'excellent', 'excellent', 'good', 'excellent', 'warning', 'danger', 'unknown'];
+      
+      for (let i = 1; i <= cellsCount; i++) {
+        const hex = document.createElement('div');
+        hex.className = 'honeycomb-hex';
+        
+        let state = 'excellent';
+        if (i % 9 === 0) state = 'danger';
+        else if (i % 7 === 0) state = 'warning';
+        else if (i % 5 === 0) state = 'good';
+        else if (i % 15 === 0) state = 'critical';
+        
+        hex.classList.add(`health-${state}`);
+        hex.title = `Pod: pod-worker-${i} (Health: ${state})`;
+        
+        hex.onclick = () => {
+          alert(`容器 Pod 详情:\n名称: pod-worker-${i}\n状态: ${state === 'danger' ? 'CrashLoopBackOff' : 'Running'}\n资源占比: CPU 45% / MEM 32%`);
+        };
+        grid.appendChild(hex);
+      }
+    }
+    generateHoneycomb();
+
+    let containerGauge = null;
+    function toggleContainerView(view) {
+      document.getElementById('btnHoneycombBS').classList.toggle('active', view === 'honey');
+      document.getElementById('btnGaugeBS').classList.toggle('active', view === 'gauge');
+      document.getElementById('honeycombViewBS').style.display = view === 'honey' ? 'block' : 'none';
+      document.getElementById('gaugeViewBS').style.display = view === 'gauge' ? 'flex' : 'none';
+
+      if (view === 'gauge' && !containerGauge) {
+        setTimeout(initContainerGauge, 100);
+      }
+    }
+
+    function initContainerGauge() {
+      const ctx = document.getElementById('containerGaugeChartBS');
+      if (!ctx) return;
+      containerGauge = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [315, 69],
+            backgroundColor: ['#10b981', '#f59e0b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '80%',
+          rotation: -90,
+          circumference: 180,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+
+    // ============================================================
+    // 传统资源 6维用量 6大进度圈 (Chart.js doughnut charts override)
+    // ============================================================
+    function renderResDoughnut(canvasId, percent, color, text) {
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [percent, 100 - percent],
+            backgroundColor: [color, 'rgba(255,255,255,0.04)'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '72%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        },
+        plugins: [{
+          id: 'centerText',
+          afterDraw(chart) {
+            const { ctx: c, width, height } = chart;
+            c.save();
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.font = `bold ${Math.min(width, height) * 0.22}px "Share Tech Mono", sans-serif`;
+            c.fillStyle = '#ffffff';
+            c.fillText(`${percent}%`, width / 2, height / 2);
+            c.restore();
+          }
+        }]
+      });
+    }
+
+    // ============================================================
+    // CPU/内存负载折线图 (Green & Cyan Glowing Lines)
+    // ============================================================
+    let hostLoadChart = null;
+    function renderHostLoadChart() {
+      const ctx = document.getElementById('hostLoadTrendChart');
+      if (!ctx) return;
+      
+      const labels = Array.from({length: 12}, (_, i) => `${i*2}:00`);
+      
+      hostLoadChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'CPU 负载',
+              data: [35, 42, 38, 55, 62, 48, 70, 75, 52, 45, 40, 38],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.04)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0
+            },
+            {
+              label: '内存负载',
+              data: [50, 52, 51, 58, 60, 62, 65, 68, 64, 60, 58, 56],
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6, 182, 212, 0.04)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#0a0e1a', cornerRadius: 4 }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 9 } }, border: { display: false } },
+            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#6b7280', font: { size: 9 } }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ============================================================
+    // GPU 利用率核心 4维 弧形仪表盘
+    // ============================================================
+    function renderGpuCoreGauge(canvasId, value, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      
+      const w = rect.width;
+      const h = rect.height;
+      const cx = w / 2;
+      const cy = h * 0.8;
+      const outerR = Math.min(w, h) * 0.44;
+      const innerR = outerR * 0.72;
+      
+      const targetAngle = Math.PI + (value / 100) * Math.PI;
+      let currentAngle = Math.PI;
+      
+      const run = () => {
+        currentAngle += (targetAngle - currentAngle) * 0.08;
+        ctx.clearRect(0,0,w,h);
+        
+        // Track
+        ctx.beginPath();
+        ctx.arc(cx, cy, (outerR+innerR)/2, Math.PI, 2*Math.PI);
+        ctx.lineWidth = outerR - innerR;
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.stroke();
+        
+        // Value
+        ctx.beginPath();
+        ctx.arc(cx, cy, (outerR+innerR)/2, Math.PI, currentAngle);
+        ctx.lineWidth = outerR - innerR;
+        ctx.strokeStyle = color;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        
+        // Text
+        ctx.shadowBlur = 0;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${outerR*0.42}px "Share Tech Mono", sans-serif`;
+        ctx.fillText(`${value}%`, cx, cy - outerR*0.12);
+        ctx.restore();
+        
+        if (Math.abs(targetAngle - currentAngle) > 0.01) {
+          requestAnimationFrame(run);
+        }
+      };
+      run();
+    }
+
+    function triggerAllGpuGauges() {
+      renderGpuCoreGauge('gaugeAllocationBS', 95.3, '#10b981');
+      renderGpuCoreGauge('gaugeComputeBS', 81.0, '#10b981');
+      renderGpuCoreGauge('gaugeMemAllocBS', 65.0, '#06b6d4');
+      renderGpuCoreGauge('gaugeMemUtilBS', 88.0, '#06b6d4');
+    }
+
+    // ============================================================
+    // 集群/节点 GPU 实时用量矩阵 (GPU Util Table)
+    // ============================================================
+    const gpuClusterData = {
+      '1h': [
+        { name: 'kc-demo-prod', quota: '10.00', allocated: '7.20', compute: 76, vram: 82, load: 15 },
+        { name: 'kc-demo-dev', quota: '24.00', allocated: '2.10', compute: 30, vram: 38, load: 8 },
+        { name: 'kc-demo-stage', quota: '18.00', allocated: '1.00', compute: 15, vram: 18, load: 3 }
+      ],
+      '24h': [
+        { name: 'kc-demo-prod', quota: '10.00', allocated: '7.53', compute: 81, vram: 88, load: 15 },
+        { name: 'kc-demo-dev', quota: '24.00', allocated: '2.45', compute: 35, vram: 42, load: 8 },
+        { name: 'kc-demo-stage', quota: '18.00', allocated: '0.80', compute: 12, vram: 15, load: 3 }
+      ],
+      '7d': [
+        { name: 'kc-demo-prod', quota: '10.00', allocated: '7.85', compute: 85, vram: 90, load: 15 },
+        { name: 'kc-demo-dev', quota: '24.00', allocated: '3.00', compute: 40, vram: 45, load: 8 },
+        { name: 'kc-demo-stage', quota: '18.00', allocated: '0.50', compute: 8, vram: 10, load: 3 }
+      ]
+    };
+
+    const gpuNodeData = {
+      '1h': [
+        { name: 'node-gpu-01', quota: '8.00', allocated: '3.80', compute: 92, vram: 85, load: 5 },
+        { name: 'node-gpu-02', quota: '4.00', allocated: '1.90', compute: 55, vram: 50, load: 3 },
+        { name: 'node-gpu-03', quota: '4.00', allocated: '1.50', compute: 38, vram: 42, load: 2 }
+      ],
+      '24h': [
+        { name: 'node-gpu-01', quota: '8.00', allocated: '4.00', compute: 95, vram: 90, load: 5 },
+        { name: 'node-gpu-02', quota: '4.00', allocated: '2.00', compute: 60, vram: 55, load: 3 },
+        { name: 'node-gpu-03', quota: '4.00', allocated: '1.53', compute: 40, vram: 45, load: 2 }
+      ],
+      '7d': [
+        { name: 'node-gpu-01', quota: '8.00', allocated: '4.20', compute: 97, vram: 94, load: 5 },
+        { name: 'node-gpu-02', quota: '4.00', allocated: '2.50', compute: 65, vram: 62, load: 3 },
+        { name: 'node-gpu-03', quota: '4.00', allocated: '1.80', compute: 45, vram: 48, load: 2 }
+      ]
+    };
+
+    let tableSortCol = 2;
+    let tableSortAsc = false;
+
+    function updateGpuAllocationViewBS() {
+      const type = document.getElementById('gpuClusterGroupSelectBS').value;
+      const time = document.getElementById('gpuClusterTimeSelectBS').value;
+      const header = document.getElementById('gpuColHeaderBS');
+      
+      header.innerText = type === 'node' ? '物理节点' : '纳管集群';
+      renderGpuTableDataBS(type, time);
+    }
+
+    function renderGpuTableDataBS(type, time) {
+      const source = type === 'node' ? gpuNodeData : gpuClusterData;
+      let list = JSON.parse(JSON.stringify(source[time] || source['24h']));
+      
+      // Sort
+      list.sort((a, b) => {
+        let v1 = a.name, v2 = b.name;
+        if (tableSortCol === 1) { v1 = parseFloat(a.quota); v2 = parseFloat(b.quota); }
+        else if (tableSortCol === 2) { v1 = parseFloat(a.allocated); v2 = parseFloat(b.allocated); }
+        else if (tableSortCol === 3) { v1 = a.compute; v2 = b.compute; }
+        else if (tableSortCol === 4) { v1 = a.vram; v2 = b.vram; }
+        return tableSortAsc ? v1 - v2 : v2 - v1;
+      });
+
+      const tbody = document.querySelector('#gpuAllocationDataTableBS tbody');
+      tbody.innerHTML = '';
+      
+      list.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:#fff; font-weight:600; display:flex; align-items:center; gap:8px;">
+            ${type === 'cluster' ? `<span onclick="openAppsModalBS('${row.name}')" style="cursor:pointer; color:var(--primary);">📂</span>` : '⚙️'}
+            ${row.name}
+          </td>
+          <td>${row.quota}</td>
+          <td style="color:var(--primary); font-weight:bold;">${row.allocated}</td>
+          <td>
+            <div class="table-progress-cell">
+              <span>${row.compute}%</span>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${row.compute}%"></div></div>
+            </div>
+          </td>
+          <td>
+            <div class="table-progress-cell">
+              <span>${row.vram}%</span>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${row.vram}%; background:var(--secondary); box-shadow:0 0 6px var(--secondary-glow);"></div></div>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function sortGpuTableBS(colIndex) {
+      if (tableSortCol === colIndex) {
+        tableSortAsc = !tableSortAsc;
+      } else {
+        tableSortCol = colIndex;
+        tableSortAsc = false;
+      }
+
+      // Render sort indicators
+      const ths = document.querySelectorAll('#gpuAllocationDataTableBS th');
+      ths.forEach((th, idx) => {
+        let text = th.innerText.replace(' ↓', '').replace(' ↑', '');
+        if (idx === colIndex) {
+          th.innerText = text + (tableSortAsc ? ' ↑' : ' ↓');
+        } else {
+          th.innerText = text;
+        }
+      });
+
+      updateGpuAllocationViewBS();
+    }
+
+    // ============================================================
+    // AI ROI 折线图 与 护栏拦截 柱状图
+    // ============================================================
+    let aiRoiChart = null;
+    let guardrailChart = null;
+
+    function renderAiRoiChartBS(labels, data) {
+      const ctx = document.getElementById('aiRoiChartBS');
+      if (!ctx) return;
+      
+      if (aiRoiChart) aiRoiChart.destroy();
+      
+      const grad = ctx.getContext('2d').createLinearGradient(0, 0, 0, 100);
+      grad.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
+      grad.addColorStop(1, 'rgba(16, 185, 129, 0.005)');
+
+      aiRoiChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            borderColor: '#10b981',
+            backgroundColor: grad,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 9 } }, border: { display: false } },
+            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#6b7280', font: { size: 9 } }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderGuardrailChartBS(labels, data) {
+      const ctx = document.getElementById('guardrailChartBS');
+      if (!ctx) return;
+      
+      if (guardrailChart) guardrailChart.destroy();
+      
+      guardrailChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: 'rgba(6, 182, 212, 0.65)',
+            hoverBackgroundColor: '#06b6d4',
+            borderWidth: 0,
+            borderRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 8 } }, border: { display: false } },
+            y: { grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { color: '#6b7280', font: { size: 8 } }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    function changeAiPresetBS(preset) {
+      const roiText = document.getElementById('roiValueValBS');
+      let roiVal = '+￥65.4K';
+      
+      let roiLabels = [];
+      let roiData = [];
+      let guardLabels = [];
+      let guardData = [];
+
+      if (preset === '1h') {
+        roiVal = '+￥3.2K';
+        roiLabels = ['10m', '20m', '30m', '40m', '50m', '60m'];
+        roiData = [100, 500, 1200, 1800, 2500, 3200];
+        guardLabels = roiLabels;
+        guardData = [2, 5, 3, 8, 4, 6];
+      } else if (preset === '12h') {
+        roiVal = '+￥18.5K';
+        roiLabels = ['0h', '2h', '4h', '6h', '8h', '10h', '12h'];
+        roiData = [3000, 5000, 8000, 12000, 15000, 18500];
+        guardLabels = roiLabels;
+        guardData = [12, 15, 8, 22, 14, 16];
+      } else if (preset === '7d') {
+        roiVal = '+￥420K';
+        roiLabels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+        roiData = [50000, 120000, 190000, 250000, 310000, 380000, 420000];
+        guardLabels = roiLabels;
+        guardData = [120, 150, 105, 230, 180, 140, 205];
+      } else { // 24h default
+        roiVal = '+￥65.4K';
+        roiLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+        roiData = [5000, 15000, 28000, 42000, 51000, 58000, 65400];
+        guardLabels = roiLabels;
+        guardData = [20, 45, 32, 60, 48, 25, 40];
+      }
+
+      roiText.innerText = roiVal;
+      renderAiRoiChartBS(roiLabels, roiData);
+      renderGuardrailChartBS(guardLabels, guardData);
+    }
+
+    // ============================================================
+    // AI 安全评分大仪表圈绘制
+    // ============================================================
+    function renderSafetyScoreCircle() {
+      const canvas = document.getElementById('safetyScoreCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,100,100);
+      
+      // Track
+      ctx.beginPath();
+      ctx.arc(50, 50, 42, 0, 2*Math.PI);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.stroke();
+
+      // Core Progress (90%)
+      ctx.beginPath();
+      ctx.arc(50, 50, 42, -Math.PI/2, (-Math.PI/2) + (1.8*Math.PI));
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#10b981';
+      ctx.shadowColor = '#10b981';
+      ctx.shadowBlur = 6;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // ============================================================
+    // 大模型与集群成本双表格模块 (Model tokens & Cluster costs)
+    // ============================================================
+    const modelFinanceList = [
+      { name: 'GPT-4o API Gateway', tokens: '450.2 M', cost: 12400.00 },
+      { name: 'Claude 3.5 Sonnet', tokens: '220.5 M', cost: 9500.00 },
+      { name: 'DeepSeek-V3 Coder', tokens: '1,204.0 M', cost: 2420.00 },
+      { name: 'Qwen-Max Turbo', tokens: '890.1 M', cost: 1780.00 },
+      { name: 'Llama-3-70B Local', tokens: '350.0 M', cost: 0.00 },
+      { name: 'Mistral-Large-2', tokens: '110.4 M', cost: 2200.00 }
+    ];
+
+    const clusterCostList = [
+      { name: 'k8s-cluster-prod', nodes: 24, pods: 820, cost: 74200.00 },
+      { name: 'k8s-cluster-staging', nodes: 8, pods: 140, cost: 18500.00 },
+      { name: 'k8s-cluster-dev', nodes: 12, pods: 220, cost: 12400.00 }
+    ];
+
+    let modelPage = 0;
+    let modelSortField = 'cost';
+    let modelSortAsc = false;
+
+    let clusterSortField = 'cost';
+    let clusterSortAsc = false;
+
+    function toggleFinanceTable(table) {
+      document.getElementById('btnModelTableBS').classList.toggle('active', table === 'model');
+      document.getElementById('btnClusterTableBS').classList.toggle('active', table === 'cluster');
+      document.getElementById('modelFinanceViewBS').style.display = table === 'model' ? 'flex' : 'none';
+      document.getElementById('clusterFinanceViewBS').style.display = table === 'cluster' ? 'flex' : 'none';
+    }
+
+    function renderModelTableBS() {
+      let sorted = JSON.parse(JSON.stringify(modelFinanceList));
+      sorted.sort((a,b) => {
+        let v1 = a[modelSortField];
+        let v2 = b[modelSortField];
+        if (typeof v1 === 'string') {
+          v1 = parseFloat(v1.replace(/,/g, ''));
+          v2 = parseFloat(b[modelSortField].replace(/,/g, ''));
+        }
+        return modelSortAsc ? v1 - v2 : v2 - v1;
+      });
+
+      const pageSize = 3;
+      const pageData = sorted.slice(modelPage * pageSize, (modelPage+1)*pageSize);
+
+      const tbody = document.getElementById('bsModelCostTableBody');
+      tbody.innerHTML = '';
+      pageData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:#fff; font-weight:600;">${row.model || row.name}</td>
+          <td>${row.tokens}</td>
+          <td style="color:var(--primary); font-weight:bold;">￥${row.cost.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('bsModelPageInfo').innerText = `${modelPage*pageSize + 1}-${Math.min(sorted.length, (modelPage+1)*pageSize)} of ${sorted.length}`;
+      document.getElementById('bsModelPrevBtn').disabled = modelPage === 0;
+      document.getElementById('bsModelNextBtn').disabled = (modelPage+1)*pageSize >= sorted.length;
+    }
+
+    function changeModelPageBS(dir) {
+      modelPage += dir;
+      renderModelTableBS();
+    }
+
+    function sortModelTableBS(field) {
+      if (modelSortField === field) {
+        modelSortAsc = !modelSortAsc;
+      } else {
+        modelSortField = field;
+        modelSortAsc = false;
+      }
+      renderModelTableBS();
+    }
+
+    function renderClusterTableBS() {
+      let sorted = JSON.parse(JSON.stringify(clusterCostList));
+      sorted.sort((a,b) => {
+        let v1 = a[clusterSortField];
+        let v2 = b[clusterSortField];
+        return clusterSortAsc ? v1 - v2 : v2 - v1;
+      });
+
+      const tbody = document.getElementById('bsClusterCostTableBody');
+      tbody.innerHTML = '';
+      sorted.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:#fff; font-weight:600;">${row.name}</td>
+          <td>${row.nodes} 台</td>
+          <td>${row.pods} 个</td>
+          <td style="color:var(--secondary); font-weight:bold;">￥${row.cost.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function sortClusterTableBS(field) {
+      if (clusterSortField === field) {
+        clusterSortAsc = !clusterSortAsc;
+      } else {
+        clusterSortField = field;
+        clusterSortAsc = false;
+      }
+      renderClusterTableBS();
+    }
+
+    // ============================================================
+    // Apps Popup Component modal controls
+    // ============================================================
+    function openAppsModalBS(clusterName) {
+      document.getElementById('appsModalClusterNameBS').innerText = clusterName;
+      document.getElementById('appsPopupBS').style.display = 'flex';
+    }
+    
+    function closeAppsModalBS() {
+      document.getElementById('appsPopupBS').style.display = 'none';
+    }
+
+    // ============================================================
+    // 页面初始化总引擎
+    // ============================================================
+    window.onload = function() {
+      // 6维进度柱图
+      renderResDoughnut('bsResCpu', 29, '#10b981');
+      renderResDoughnut('bsResMemory', 43, '#10b981');
+      renderResDoughnut('bsResPods', 57, '#10b981');
+      renderResDoughnut('bsResDisk', 39, '#06b6d4');
+      renderResDoughnut('bsResGpu', 72, '#06b6d4');
+      renderResDoughnut('bsResVram', 65, '#06b6d4');
+      
+      // 折线图与4维仪表盘
+      renderHostLoadChart();
+      triggerAllGpuGauges();
+      
+      // GPU 用量表格
+      updateGpuAllocationViewBS();
+      
+      // AI ROI大盘
+      changeAiPresetBS('24h');
+      
+      // 安全审计
+      renderSafetyScoreCircle();
+      
+      // 财务双表
+      renderModelTableBS();
+      renderClusterTableBS();
+    };
+  </script>
+
+  <!-- ============================================================ -->
+  <!-- 演示批注助手运行时 JavaScript (14大批注 100% 完整继承)         -->
+  <!-- ============================================================ -->
+  <script>
+    (function() {
+      const annotationsData = [
+        {
+          targetId: 'gpuNodesCard',
+          title: '就绪 / 总计 GPU 节点',
+          text: '展示集群中安装并就绪了 NVIDIA 物理驱动与 Kpanda GPU 插件的节点占比，用以评估底层物理底座。',
+          value: '掌握底层物理服务器挂载状况，为运维团队规划集群容灾。',
+          source: 'Kubernetes Extended Resources (nvidia.com/gpu)'
+        },
+        {
+          targetId: 'gpuDevicesCard',
+          title: '就绪 / 总计 GPU 设备',
+          text: '由 Device Plugin 自动上报的物理 GPU 卡片（显卡实体）就绪数。',
+          value: '明确当前集群可被调度分发的最大 GPU 卡数底座。',
+          source: 'NVIDIA Device Plugin API'
+        },
+        {
+          targetId: 'gpuAllocatedCard',
+          title: '已分配 GPU 设备',
+          text: '当前已被容器组（Pods）在 YAML 中 Request 申请 of GPU 资源总量（支持小数以体现虚拟化/切卡/MIG）。',
+          value: '直观反映算力调度和分配的饱和度，作为业务是否排队或扩容硬件的直接依据。',
+          source: 'Kubernetes kube-apiserver Extended Resources'
+        },
+        {
+          targetId: 'gpuIdleCard',
+          title: '空闲已分配 GPU 设备 (浪费治理核心)',
+          text: '<strong>空闲浪费治理预警：</strong>已被业务负载 Request 占用锁死，但底层监控到其实际 GPU 计算频率（利用率）持续 5 分钟低于 5% 的资源卡数。',
+          value: '快速查杀“占着 GPU 资源却不跑任务”的算力黑洞，协助财务与业务部门进行降本提效！',
+          source: 'DCGM Exporter 实时计算率均值 ＋ Pod Spec Requests'
+        },
+        {
+          targetId: 'gpuGaugeCard',
+          title: 'GPU 4维利用率仪表盘',
+          text: '将 GPU 的物理指标拆解为四维监控：<br>1. <strong>GPU 分配率</strong>：已申请卡数 / 物理卡数<br>2. <strong>GPU 计算利用率</strong>：实际核心计算频率均值<br>3. <strong>显存分配率</strong>：已申请显存 / 物理总显存<br>4. <strong>显存利用率</strong>：实际显存消耗 / 已分配显存',
+          value: '防范“显存已分满，算力未用完”导致的盲目加卡，实现异构硬件 of 科学扩容。',
+          source: 'DCGM Exporter + Prometheus PromQL'
+        },
+        {
+          targetId: 'clusterStatsCard',
+          title: 'K8s 集群统计与应用明细',
+          text: '展现平台纳管的集群和节点总数。点击右侧的“⋯”按钮，可弹出当前集群所安装的核心云原生应用组件包（如 containerd, Cilium, spiderpool 等）。',
+          value: '方便架构师和运维人员核对集群基础应用版本。',
+          source: 'kpanda 容器管理接口 ＋ Helm Release API'
+        },
+        {
+          targetId: 'featureCard',
+          title: 'DCE 5.0 全局模块快捷导航',
+          text: 'DaoCloud 容器管理、可观测性（监控、追踪、日志、告警）以及全局设置板块的快捷跳转索引。',
+          value: '快速跳转至监控大屏或故障根因定位系统。',
+          source: 'DCE 5.0 统一网关路由'
+        },
+        {
+          targetId: 'resourceCard',
+          title: '传统与异构 6维用量进度圈',
+          text: '融合监控面板。打破壁垒，将传统系统监控（CPU、内存、Pod数、磁盘）与 GPU 异构算力监控（GPU 物理卡数、显存容量）在同一看板中并排展示。',
+          value: '支持全维度容量审计，助力企业从宏观通用服务器到 AI 服务器的算力并轨管理。',
+          source: 'Node Exporter + DCGM Exporter'
+        },
+        {
+          targetId: 'gpuAllocationTable',
+          title: '节点与集群维度 GPU 利用率表',
+          text: '下钻表单，提供 Cluster 与 Node 两个维度的聚合切换，支持一小时至七天时间窗重算。支持配额、分配卡、计算率、显存率、工作负载 5 列排序。',
+          value: '一键点击“排序”表头，即可将最繁忙或最空置的节点/集群置顶，方便指出负载异常节点。',
+          source: 'Prometheus PromQL 聚合查询 ＋ Insight 仪表盘'
+        },
+        {
+          targetId: 'aiRoiCard',
+          title: 'AI 智能运维 ROI 收益',
+          text: '量化指标。展示由 AI 智能运维（如冷热切片动态调度、算力闲置降频回收、vLLM 大模型动态扩缩）直接为企业节省的硬件折算资金。',
+          value: '直观地用“省了多少钱”量化 AI 运维产生的实际商业价值，让回报看得见！',
+          source: 'AI 运维成本核算计量微服务'
+        },
+        {
+          targetId: 'guardrailCard',
+          title: 'AI 安全网关护栏干预次数',
+          text: '大模型安全防护指标。折线图反映护栏网关在时间窗口内针对提示词注入攻击、幻觉偏离、PII 隐私信息（如身份证、API Key）泄露的紧急拦截拦截趋势。',
+          value: '保障企业大模型应用安全合规，预防安全泄露和越狱尝试。',
+          source: 'AI Safety 审计拦截日志聚合'
+        },
+        {
+          targetId: 'safetyCard',
+          title: 'AI 安全快照评分 (实时指标)',
+          text: '大模型安全打分看板（不受时间轴波动）。细分评估：注入防御(95), 敏感数据脱敏(82), 内容合规(98)以及幻觉拦截(78), 并挂载 AI 优化建议。',
+          value: '向安全官和审计部直观展示系统的 AI 安全态势。',
+          source: 'AI Safety 评估打分引擎'
+        },
+        {
+          targetId: 'modelCostCard',
+          title: '大模型 API 消费明细账单',
+          text: '展示企业内部不同大模型（GPT-4o、Claude、DeepSeek、Qwen等）调用消耗的 Tokens 总数及产生的 API 账单费用，支持字段排序与分页。',
+          value: '精确拆解企业 AI 的单项模型成本，实现按模型核算 ROI。',
+          source: 'LLM Gateway 计量网关'
+        },
+        {
+          targetId: 'clusterBreakdownCard',
+          title: '集群消费成本分摊',
+          text: '根据各集群节点的硬件规格及使用时长，由成本计量引擎加权核算出的集群绝对折算账单排行。支持升降序排序与多页翻页。',
+          value: '解决多部门、多集群资产消耗在财务层面的分摊核算与治理审计。',
+          source: 'Insight 成本核算计量微服务'
+        }
+      ];
+
+      window.closeAnnotationSidebar = function() {
+        document.body.classList.remove('annotation-sidebar-open');
+      };
+
+      function initPresentationGuide() {
+        const sidebar = document.createElement('div');
+        sidebar.className = 'annotation-sidebar';
+        sidebar.id = 'annotationSidebar';
+        sidebar.innerHTML = `
+          <div class="annotation-sidebar-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">💡 演示批注助手</h3>
+              <span class="sidebar-close-btn" onclick="closeAnnotationSidebar()" style="font-size: 22px; font-weight: bold; cursor: pointer; color: var(--text-secondary); line-height: 1; transition: color 0.2s;">&times;</span>
+            </div>
+            <p style="margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.4;">点击原型中的数字徽章，本栏将自动弹出并高亮该编号对应的详细批注内容。</p>
+          </div>
+          <div class="annotation-sidebar-content" id="annotationSidebarContent"></div>
+        `;
+        document.body.appendChild(sidebar);
+
+        const sidebarContent = document.getElementById('annotationSidebarContent');
+        annotationsData.forEach((item, index) => {
+          const card = document.createElement('div');
+          card.className = 'annotation-sidebar-card';
+          card.id = `annotation-card-${index}`;
+          card.innerHTML = `
+            <h4><span class="card-num">${index + 1}</span> ${item.title}</h4>
+            <p>${item.text}</p>
+            <div class="tip-section">
+              <span class="tip-label">💡 亮点价值</span>
+              <span style="font-size: 11px; color: #fff;">${item.value}</span>
+            </div>
+            <div class="tip-source">📊 数据来源: ${item.source}</div>
+          `;
+          card.onclick = function() {
+            highlightDashboardWidget(item.targetId, index);
+          };
+          sidebarContent.appendChild(card);
+        });
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'annotation-btn-floating';
+        toggleBtn.id = 'togglePresentationBtn';
+        toggleBtn.innerHTML = `
+          <span style="font-size:14px;">📖</span>
+          <span>演示批注模式: 关</span>
+        `;
+        
+        toggleBtn.onclick = function() {
+          const isActive = document.body.classList.toggle('annotation-mode-active');
+          toggleBtn.classList.toggle('active', isActive);
+          if (isActive) {
+            toggleBtn.innerHTML = `
+              <span style="font-size:14px;">💡</span>
+              <span>演示批注模式: 开</span>
+            `;
+            document.body.classList.remove('annotation-sidebar-open');
+            showToastMessage("演示批注模式已开启！点击大屏卡片右上角闪烁的「数字徽章」即可查看亮点批注说明。");
+          } else {
+            toggleBtn.innerHTML = `
+              <span style="font-size:14px;">📖</span>
+              <span>演示批注模式: 关</span>
+            `;
+            closeAnnotationSidebar();
+            document.querySelectorAll('.annotation-sidebar-card').forEach(c => c.classList.remove('active'));
+          }
+        };
+        document.body.appendChild(toggleBtn);
+
+        annotationsData.forEach((item, index) => {
+          const container = document.getElementById(item.targetId);
+          if (!container) return;
+
+          const badge = document.createElement('div');
+          badge.className = 'annotation-badge';
+          badge.innerHTML = index + 1;
+          badge.onclick = function(e) {
+            e.stopPropagation();
+            highlightAnnotationCard(index);
+          };
+          container.appendChild(badge);
+        });
+      }
+
+      function highlightAnnotationCard(index) {
+        document.body.classList.add('annotation-sidebar-open');
+        document.querySelectorAll('.annotation-sidebar-card').forEach(c => {
+          c.classList.remove('active');
+        });
+        
+        const card = document.getElementById(`annotation-card-${index}`);
+        if (card) {
+          card.classList.add('active');
+          setTimeout(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 80);
+        }
+      }
+
+      function highlightDashboardWidget(targetId, index) {
+        const widget = document.getElementById(targetId);
+        if (widget) {
+          widget.style.transition = 'all 0.5s';
+          widget.style.outline = '2px solid #10b981';
+          widget.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.8)';
+          
+          setTimeout(() => {
+            widget.style.outline = 'none';
+            widget.style.boxShadow = 'none';
+          }, 2000);
+        }
+      }
+
+      function showToastMessage(msg) {
+        let toast = document.getElementById('annotation-toast-msg');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'annotation-toast-msg';
+          toast.style.cssText = `
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 14, 26, 0.95);
+            color: #fff;
+            border: 1px solid #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 999999;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          `;
+          document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-20px)';
+        }, 5000);
+      }
+
+      setTimeout(initPresentationGuide, 400);
+    })();
+  </script>
+</body>
+</html>
