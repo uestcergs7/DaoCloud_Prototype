@@ -57,8 +57,9 @@ export default function RouterDetail() {
         }
       },
       backends: [
-        { name: 'ht-backend', port: 8080, weight: 100, mirror: false },
-        { name: 'mirror-backend', port: 8081, weight: 0, mirror: true }
+        { namespace: 'bs-system', name: 'ht-backend', port: 8080, weight: 100, mirror: false, mirrorServiceName: '-', mirrorServicePort: '-' },
+        { namespace: 'bs-system', name: 'prod-backend', port: 80, weight: 90, mirror: true, mirrorServiceName: 'mirror-backend', mirrorServicePort: '8081' },
+        { namespace: 'test-ns', name: 'canary-backend', port: 8080, weight: 10, mirror: false, mirrorServiceName: '-', mirrorServicePort: '-' }
       ]
     }
   ];
@@ -229,19 +230,25 @@ export default function RouterDetail() {
                     <table className="inner-table">
                       <thead>
                         <tr>
+                          <th>{t.router.namespace}</th>
                           <th>{t.router.serviceName}</th>
                           <th>{t.router.port}</th>
                           <th>{t.router.weight}</th>
                           <th>{t.router.trafficMirror}</th>
+                          <th>{t.router.mirrorServiceName}</th>
+                          <th>{t.router.mirrorServicePort}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rule.backends.map((b, idx) => (
                           <tr key={idx}>
+                            <td>{b.namespace}</td>
                             <td>{b.name}</td>
                             <td>{b.port}</td>
                             <td>{b.weight}</td>
                             <td>{b.mirror ? t.router.enable : t.router.disable}</td>
+                            <td>{b.mirrorServiceName}</td>
+                            <td>{b.mirrorServicePort}</td>
                           </tr>
                         ))}
                       </tbody>
