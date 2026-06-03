@@ -54,12 +54,18 @@ export default function RouterDetail() {
           enabled: true,
           originalPath: '/api',
           rewritePath: '/v2'
+        },
+        requestMirror: {
+          enabled: true,
+          namespace: 'bs-system',
+          serviceName: 'mirror-backend',
+          port: '8081'
         }
       },
       backends: [
-        { namespace: 'bs-system', name: 'ht-backend', port: 8080, weight: 100, mirror: false, mirrorServiceNamespace: '-', mirrorServiceName: '-', mirrorServicePort: '-' },
-        { namespace: 'bs-system', name: 'prod-backend', port: 80, weight: 90, mirror: true, mirrorServiceNamespace: 'bs-system', mirrorServiceName: 'mirror-backend', mirrorServicePort: '8081' },
-        { namespace: 'test-ns', name: 'canary-backend', port: 8080, weight: 10, mirror: false, mirrorServiceNamespace: '-', mirrorServiceName: '-', mirrorServicePort: '-' }
+        { namespace: 'bs-system', name: 'ht-backend', port: 8080, weight: 100 },
+        { namespace: 'bs-system', name: 'prod-backend', port: 80, weight: 90 },
+        { namespace: 'test-ns', name: 'canary-backend', port: 8080, weight: 10 }
       ]
     }
   ];
@@ -143,7 +149,7 @@ export default function RouterDetail() {
                 </div>
 
                 {/* Filters */}
-                { (rule.filters.reqHeaderRewrite.enabled || rule.filters.resHeaderRewrite.enabled || rule.filters.urlRewrite.enabled) && (
+                { (rule.filters.reqHeaderRewrite.enabled || rule.filters.resHeaderRewrite.enabled || rule.filters.urlRewrite.enabled || rule.filters.requestMirror?.enabled) && (
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>{t.router.filters}</div>
                     <div className="tls-card" style={{ marginTop: 0 }}>
@@ -201,7 +207,7 @@ export default function RouterDetail() {
                       )}
 
                       {rule.filters.urlRewrite.enabled && (
-                        <div>
+                        <div style={{ marginBottom: rule.filters.requestMirror?.enabled ? '16px' : 0 }}>
                           <div className="info-label" style={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>
                             {t.router.urlRewrite}
                           </div>
@@ -213,6 +219,28 @@ export default function RouterDetail() {
                             <div className="info-item">
                               <div className="info-label">{t.router.rewritePath}</div>
                               <div className="info-value">{rule.filters.urlRewrite.rewritePath}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {rule.filters.requestMirror?.enabled && (
+                        <div>
+                          <div className="info-label" style={{ marginBottom: '8px', fontWeight: 500, color: 'var(--text-main)' }}>
+                            {t.router.trafficMirror}
+                          </div>
+                          <div className="listener-info-grid" style={{ marginBottom: 0 }}>
+                            <div className="info-item">
+                              <div className="info-label">{t.router.namespace}</div>
+                              <div className="info-value">{rule.filters.requestMirror.namespace}</div>
+                            </div>
+                            <div className="info-item">
+                              <div className="info-label">{t.router.mirrorServiceName}</div>
+                              <div className="info-value">{rule.filters.requestMirror.serviceName}</div>
+                            </div>
+                            <div className="info-item">
+                              <div className="info-label">{t.router.mirrorServicePort}</div>
+                              <div className="info-value">{rule.filters.requestMirror.port}</div>
                             </div>
                           </div>
                         </div>
@@ -234,10 +262,6 @@ export default function RouterDetail() {
                           <th>{t.router.serviceName}</th>
                           <th>{t.router.port}</th>
                           <th>{t.router.weight}</th>
-                          <th>{t.router.trafficMirror}</th>
-                          <th>{t.router.mirrorServiceNamespace}</th>
-                          <th>{t.router.mirrorServiceName}</th>
-                          <th>{t.router.mirrorServicePort}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -247,10 +271,6 @@ export default function RouterDetail() {
                             <td>{b.name}</td>
                             <td>{b.port}</td>
                             <td>{b.weight}</td>
-                            <td>{b.mirror ? t.router.enable : t.router.disable}</td>
-                            <td>{b.mirrorServiceNamespace}</td>
-                            <td>{b.mirrorServiceName}</td>
-                            <td>{b.mirrorServicePort}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -327,6 +347,12 @@ spec:
             path:
               type: ReplacePrefixMatch
               replacePrefix: /v2
+        - type: RequestMirror
+          requestMirror:
+            backendRef:
+              name: mirror-backend
+              namespace: bs-system
+              port: 8081
       backendRefs:
         - name: ht-backend
           port: 8080
