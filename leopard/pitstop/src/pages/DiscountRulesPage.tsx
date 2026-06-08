@@ -1310,13 +1310,27 @@ export default function DiscountRulesPage() {
   // ---- 渲染 ----
   return (
     <div>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 24, gap: 16 }}>
-        <Col style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', flex: 1 }}>
+      {/* 头部标题与操作按钮 */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
           <Title level={4} style={{ margin: 0, whiteSpace: 'nowrap' }}>
             折扣率管理
             {annotationMode && <AnnotationBadge number={1} />}
           </Title>
-          <Space wrap size={8} style={{ marginLeft: 8 }}>
+        </Col>
+        <Col>
+          <Space>
+            <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加</Button>
+            {annotationMode && <AnnotationBadge number={2} style={{ marginLeft: -4 }} />}
+          </Space>
+        </Col>
+      </Row>
+
+      {/* 筛选过滤面板栏 */}
+      <Row style={{ marginBottom: 16 }}>
+        <Col span={24}>
+          <Space wrap size={8}>
             {annotationMode && <AnnotationBadge number={11} style={{ marginRight: 4 }} />}
             <Input
               placeholder="搜索规则名称..."
@@ -1399,13 +1413,6 @@ export default function DiscountRulesPage() {
                 重置
               </Button>
             )}
-          </Space>
-        </Col>
-        <Col>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加</Button>
-            {annotationMode && <AnnotationBadge number={2} style={{ marginLeft: -4 }} />}
           </Space>
         </Col>
       </Row>
