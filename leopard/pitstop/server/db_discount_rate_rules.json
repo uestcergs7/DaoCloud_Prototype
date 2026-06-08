@@ -1,0 +1,109 @@
+{
+  "rules": [
+    {
+      "id": "1",
+      "name": "管理员免费规则",
+      "enabled": true,
+      "discountRate": "0.00",
+      "mainAccount": "admin",
+      "skuId": "sku-101",
+      "timePeriods": [
+        {
+          "start": "now",
+          "end": "forever"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "渠道专享七五折",
+      "enabled": true,
+      "discountRate": "0.75",
+      "mainAccount": "DaoCloud_Partner",
+      "skuId": "sku-102",
+      "timePeriods": [
+        {
+          "start": "2026-06-01T00:00:00Z",
+          "end": "2026-06-02T23:59:59Z",
+          "timeStart": "08:00:00",
+          "timeEnd": "18:00:00"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "大客户专属折扣",
+      "enabled": true,
+      "discountRate": "0.85",
+      "mainAccount": "SubAccount_ShenN",
+      "skuId": "sku-102",
+      "timePeriods": [
+        {
+          "start": "now",
+          "end": "forever"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "六月限时促销",
+      "enabled": true,
+      "discountRate": "0.60",
+      "mainAccount": "DaoCloud_Partner",
+      "skuId": "sku-101",
+      "timePeriods": [
+        {
+          "start": "2026-06-01T00:00:00Z",
+          "end": "2026-06-30T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "待启用草稿规则",
+      "enabled": false,
+      "discountRate": "0.90",
+      "mainAccount": "admin",
+      "skuId": "sku-102",
+      "timePeriods": [
+        {
+          "start": "now",
+          "end": "forever"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "每日高峰期九折",
+      "enabled": true,
+      "discountRate": "0.90",
+      "mainAccount": "SubAccount_ShenN",
+      "skuId": "sku-101",
+      "timePeriods": [
+        {
+          "start": "now",
+          "end": "forever",
+          "timeStart": "09:00:00",
+          "timeEnd": "18:00:00"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "test",
+      "enabled": false,
+      "discountRate": "1.00",
+      "mainAccount": "DCE_Operator",
+      "skuId": "sku-101",
+      "timePeriods": [
+        {
+          "start": "now",
+          "end": "forever",
+          "timeStart": "04:00:00",
+          "timeEnd": "08:00:00"
+        }
+      ]
+    }
+  ],
+  "autoIncrement": 9
+}

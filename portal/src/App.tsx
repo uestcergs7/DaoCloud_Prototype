@@ -75,6 +75,23 @@ const navigationData: any[] = [
         ]
       }
     ]
+  },
+  {
+    id: 'leopard',
+    title: 'Leopard',
+    icon: <LayoutGrid size={18} />,
+    children: [
+      {
+        id: 'pitstop',
+        title: 'Pitstop (折扣率管理)',
+        icon: <Server size={18} />,
+        path: '/leopard/pitstop',
+        getIframeUrl: (lang?: string) =>
+          import.meta.env.DEV
+            ? `http://localhost:5175/?lang=${lang || 'zh'}`
+            : `/prototypes/pitstop/?lang=${lang || 'zh'}`
+      }
+    ]
   }
 ];
 
@@ -96,7 +113,7 @@ const portalI18n = {
 };
 
 function Sidebar() {
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ kpanda: true, insight: true });
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ kpanda: true, insight: true, leopard: true });
   const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({ 'gpu-ipavo': true });
   const navigate = useNavigate();
   const location = useLocation();
@@ -258,6 +275,8 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
     breadcrumb = 'Insight / GPU iPavo / 交互式规格说明书 (Spec)';
   } else if (location.pathname === '/gpu-ipavo/research') {
     breadcrumb = 'Insight / GPU iPavo / 行业竞品调研 (Research)';
+  } else if (location.pathname === '/leopard/pitstop') {
+    breadcrumb = 'Leopard / Pitstop (折扣率管理)';
   }
 
   return (
@@ -308,6 +327,7 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
           <Route path="/gpu-ipavo/bigscreen" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
           <Route path="/gpu-ipavo/spec" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
           <Route path="/gpu-ipavo/research" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
+          <Route path="/leopard/pitstop" element={<IframeViewer url={currentIframeUrl} lang={lang} />} />
         </Routes>
       </div>
     </div>

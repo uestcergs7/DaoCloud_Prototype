@@ -2,6 +2,6 @@
   "name": "daocloud-prototype-monorepo",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd kpanda/gatewayapi && npm install && npm run build && cd ../../portal && npm install && npm run build && cd .. && rm -rf dist && mkdir -p dist/prototypes/gatewayapi && mkdir -p dist/prototypes/gpu_ipavo && cp -r portal/dist/* dist/ && cp -r kpanda/gatewayapi/dist/* dist/prototypes/gatewayapi/ && cp -r insight/gpu_ipavo/* dist/prototypes/gpu_ipavo/"
+    "build": "cd kpanda/gatewayapi && npm install && npm run build && cd ../../leopard/pitstop && npm install && npm run build && cd ../../portal && npm install && npm run build && cd .. && rm -rf dist && mkdir -p dist/prototypes/gatewayapi && mkdir -p dist/prototypes/gpu_ipavo && mkdir -p dist/prototypes/pitstop && cp -r portal/dist/* dist/ && cp -r kpanda/gatewayapi/dist/* dist/prototypes/gatewayapi/ && cp -r insight/gpu_ipavo/* dist/prototypes/gpu_ipavo/ && cp -r leopard/pitstop/dist/* dist/prototypes/pitstop/"
   }
 }
