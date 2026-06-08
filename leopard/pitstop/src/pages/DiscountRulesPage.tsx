@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Typography, Button, Space, Row, Col, Table, Tag, Modal, Form, Input,
+  Typography, Button, Space, Row, Table, Tag, Modal, Form, Input,
   Select, Switch, DatePicker, Dropdown, App, Radio, TimePicker, Drawer,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -14,7 +14,7 @@ import {
   updateDiscountRateRule,
   deleteDiscountRateRule,
 } from '@/services/discountRate'
-import { api } from '@/services/api'
+import axios from 'axios'
 
 const { Title } = Typography
 
@@ -793,12 +793,12 @@ export default function DiscountRulesPage() {
   useEffect(() => {
     loadData()
     // 加载用户列表（复用 ghippo mock 接口）
-    api.get('/api/ghippo/users?page=1&pageSize=100').then((res) => {
+    axios.get('/api/ghippo/users?page=1&pageSize=100').then((res) => {
       const users = (res.data.items || []).map((u: { username: string; name?: string }) => ({ label: u.username, value: u.username }))
       setMockUsers(users)
     }).catch(() => {})
     // 加载 SKU 列表（容器实例为例）
-    api.post('/api/leopard/products/skus', { product: 'zestu-container-instance', page: 1, pageSize: 100 }).then((res) => {
+    axios.post('/api/leopard/products/skus', { product: 'zestu-container-instance', page: 1, pageSize: 100 }).then((res) => {
       const skus = (res.data.items || []).map((s: { id: string; specName?: string }) => ({ label: s.id, value: s.id }))
       setMockSkus(skus)
     }).catch(() => {})
@@ -1310,112 +1310,107 @@ export default function DiscountRulesPage() {
   // ---- 渲染 ----
   return (
     <div>
-      {/* 头部标题与操作按钮 */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Title level={4} style={{ margin: 0, whiteSpace: 'nowrap' }}>
-            折扣率管理
-            {annotationMode && <AnnotationBadge number={1} />}
-          </Title>
-        </Col>
-        <Col>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加</Button>
-            {annotationMode && <AnnotationBadge number={2} style={{ marginLeft: -4 }} />}
-          </Space>
-        </Col>
-      </Row>
+      {/* 标题行 */}
+      <div style={{ marginBottom: 12 }}>
+        <Title level={4} style={{ margin: 0 }}>
+          折扣率管理
+          {annotationMode && <AnnotationBadge number={1} />}
+        </Title>
+      </div>
 
-      {/* 筛选过滤面板栏 */}
-      <Row style={{ marginBottom: 16 }}>
-        <Col span={24}>
-          <Space wrap size={8}>
-            {annotationMode && <AnnotationBadge number={11} style={{ marginRight: 4 }} />}
-            <Input
-              placeholder="搜索规则名称..."
-              allowClear
-              value={filterName}
-              onChange={(e) => {
-                setFilterName(e.target.value)
-                setPagination(prev => ({ ...prev, current: 1 }))
-              }}
-              style={{ width: 150 }}
-            />
-            
-            <Select
-              placeholder="状态筛选"
-              value={filterStatus}
-              onChange={(value) => {
-                setFilterStatus(value)
-                setPagination(prev => ({ ...prev, current: 1 }))
-              }}
-              style={{ width: 100 }}
-              options={[
-                { label: '全部状态', value: 'all' },
-                { label: '启用', value: 'enabled' },
-                { label: '停用', value: 'disabled' },
-              ]}
-            />
-            
-            <Select
-              mode="multiple"
-              maxTagCount={filterAccounts.length <= 3 ? 3 : 2}
-              maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
-              placeholder="选择主账号"
-              value={filterAccounts}
-              onChange={(values) => {
-                setFilterAccounts(values)
-                setPagination(prev => ({ ...prev, current: 1 }))
-              }}
-              className="horizontal-select"
-              style={{ width: getSelectWidth(filterAccounts), minWidth: 140 }}
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={mockUsers}
-            />
-            
-            <Select
-              mode="multiple"
-              maxTagCount={filterSkus.length <= 3 ? 3 : 2}
-              maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
-              placeholder="选择 SKU"
-              value={filterSkus}
-              onChange={(values) => {
-                setFilterSkus(values)
-                setPagination(prev => ({ ...prev, current: 1 }))
-              }}
-              className="horizontal-select"
-              style={{ width: getSelectWidth(filterSkus), minWidth: 140 }}
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={mockSkus}
-            />
+      {/* 筛选框 + 操作按钮同行：左侧筛选，右侧按钮 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+        <Space wrap size={8}>
+          {annotationMode && <AnnotationBadge number={11} style={{ marginRight: 4 }} />}
+          <Input
+            placeholder="搜索规则名称..."
+            allowClear
+            value={filterName}
+            onChange={(e) => {
+              setFilterName(e.target.value)
+              setPagination(prev => ({ ...prev, current: 1 }))
+            }}
+            style={{ width: 160 }}
+          />
 
-            {(filterName || filterStatus !== 'all' || filterAccounts.length > 0 || filterSkus.length > 0) && (
-              <Button
-                type="link"
-                onClick={() => {
-                  setFilterName('')
-                  setFilterStatus('all')
-                  setFilterAccounts([])
-                  setFilterSkus([])
-                  setPagination(prev => ({ ...prev, current: 1 }))
-                }}
-                style={{ padding: 0 }}
-              >
-                重置
-              </Button>
-            )}
-          </Space>
-        </Col>
-      </Row>
+          <Select
+            placeholder="状态筛选"
+            value={filterStatus}
+            onChange={(value) => {
+              setFilterStatus(value)
+              setPagination(prev => ({ ...prev, current: 1 }))
+            }}
+            style={{ width: 110 }}
+            options={[
+              { label: '全部状态', value: 'all' },
+              { label: '启用', value: 'enabled' },
+              { label: '停用', value: 'disabled' },
+            ]}
+          />
+
+          <Select
+            mode="multiple"
+            maxTagCount={filterAccounts.length <= 3 ? 3 : 2}
+            maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
+            placeholder="选择主账号"
+            value={filterAccounts}
+            onChange={(values) => {
+              setFilterAccounts(values)
+              setPagination(prev => ({ ...prev, current: 1 }))
+            }}
+            className="horizontal-select"
+            style={{ width: getSelectWidth(filterAccounts), minWidth: 140 }}
+            allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            options={mockUsers}
+          />
+
+          <Select
+            mode="multiple"
+            maxTagCount={filterSkus.length <= 3 ? 3 : 2}
+            maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
+            placeholder="选择 SKU"
+            value={filterSkus}
+            onChange={(values) => {
+              setFilterSkus(values)
+              setPagination(prev => ({ ...prev, current: 1 }))
+            }}
+            className="horizontal-select"
+            style={{ width: getSelectWidth(filterSkus), minWidth: 140 }}
+            allowClear
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            options={mockSkus}
+          />
+
+          {(filterName || filterStatus !== 'all' || filterAccounts.length > 0 || filterSkus.length > 0) && (
+            <Button
+              type="link"
+              onClick={() => {
+                setFilterName('')
+                setFilterStatus('all')
+                setFilterAccounts([])
+                setFilterSkus([])
+                setPagination(prev => ({ ...prev, current: 1 }))
+              }}
+              style={{ padding: 0 }}
+            >
+              重置
+            </Button>
+          )}
+        </Space>
+
+        <Space>
+          <Button icon={<ReloadOutlined />} onClick={() => loadData()}>刷新</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>添加</Button>
+          {annotationMode && <AnnotationBadge number={2} style={{ marginLeft: -4 }} />}
+        </Space>
+      </div>
 
       <Table
         columns={columns}
