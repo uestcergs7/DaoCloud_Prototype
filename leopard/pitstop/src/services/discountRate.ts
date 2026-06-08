@@ -6,7 +6,7 @@ import type {
   UpdateDiscountRateRulePayload,
 } from '@/types/discountRate'
 
-const BASE = '/products/discount-rate-rules'
+const BASE = '/api/leopard/products/discount-rate-rules'
 
 export const fetchDiscountRateRules = async (
   page: number = 1,
@@ -36,6 +36,6 @@ export const deleteDiscountRateRule = async (id: string): Promise<void> => {
 }
 
 export const fetchChannelDomains = async (): Promise<string[]> => {
-  const { data } = await api.get('/products/channel-domains')
+  const { data } = await api.get('/api/leopard/products/channel-domains')
   return data.items || []
 }
