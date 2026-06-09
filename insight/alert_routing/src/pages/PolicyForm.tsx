@@ -382,7 +382,7 @@ export default function PolicyForm({ policyId, parentId, onClose, onSuccess }: P
                   <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-gray-700 leading-relaxed">
                     在选择告警通知方式时，请确保您已经提前完成了各种通知方式的配置。如若未提前配置，请前往
-                    <a href="#" className="text-blue-600 hover:underline mx-0.5">告警中心 > 通知配置</a>
+                    <a href="#" className="text-blue-600 hover:underline mx-0.5">告警中心 {'>'} 通知配置</a>
                     进行相关配置。可同时配置多种及多个通知对象。
                   </p>
                 </div>
