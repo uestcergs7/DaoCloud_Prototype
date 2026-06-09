@@ -14,7 +14,7 @@ import {
   updateDiscountRateRule,
   deleteDiscountRateRule,
 } from '@/services/discountRate'
-import axios from 'axios'
+import { api } from '@/services/api'
 
 const { Title } = Typography
 
@@ -793,12 +793,12 @@ export default function DiscountRulesPage() {
   useEffect(() => {
     loadData()
     // 加载用户列表（复用 ghippo mock 接口）
-    axios.get('/api/ghippo/users?page=1&pageSize=100').then((res) => {
+    api.get('/api/ghippo/users?page=1&pageSize=100').then((res) => {
       const users = (res.data.items || []).map((u: { username: string; name?: string }) => ({ label: u.username, value: u.username }))
       setMockUsers(users)
     }).catch(() => {})
     // 加载 SKU 列表（容器实例为例）
-    axios.post('/api/leopard/products/skus', { product: 'zestu-container-instance', page: 1, pageSize: 100 }).then((res) => {
+    api.post('/api/leopard/products/skus', { product: 'zestu-container-instance', page: 1, pageSize: 100 }).then((res) => {
       const skus = (res.data.items || []).map((s: { id: string; specName?: string }) => ({ label: s.id, value: s.id }))
       setMockSkus(skus)
     }).catch(() => {})
