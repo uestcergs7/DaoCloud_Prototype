@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, Server, ChevronDown, ChevronRight, Globe, Cpu, BookOpen, LineChart, Monitor, Bell } from 'lucide-react';
+import { LayoutGrid, Server, ChevronDown, ChevronRight, Globe, Cpu, BookOpen, LineChart, Monitor, Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import './App.css';
 
 // Mock data for the sidebar navigation including nested GPU iPavo sub-pages with typed array
@@ -122,7 +122,7 @@ const portalI18n = {
   },
 };
 
-function Sidebar() {
+function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ kpanda: true, insight: true, leopard: true });
   const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({ 'gpu-ipavo': true });
   const navigate = useNavigate();
@@ -138,26 +138,37 @@ function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <img src="/daocloud-logo.png" alt="DaoCloud Logo" className="logo-image" />
-        <span className="logo-text">DaoCloud Prototype</span>
+        <div className="brand-wrap">
+          <img src="/daocloud-logo.png" alt="DaoCloud Logo" className="logo-image" />
+          {!collapsed && <span className="logo-text">DaoCloud Prototype</span>}
+        </div>
+        <button
+          className="sidebar-collapse-btn"
+          onClick={onToggle}
+          title={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+          aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+        >
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
       </div>
       <div className="sidebar-nav">
         {navigationData.map((product: any) => (
           <div key={product.id} className="nav-group">
             <div 
               className="nav-group-header" 
-              onClick={() => toggleGroupExpand(product.id)}
+              onClick={() => !collapsed && toggleGroupExpand(product.id)}
+              title={collapsed ? product.title : undefined}
             >
               <div className="nav-group-title">
-                {expandedGroups[product.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {!collapsed && (expandedGroups[product.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
                 {product.icon}
-                <span>{product.title}</span>
+                {!collapsed && <span>{product.title}</span>}
               </div>
             </div>
             
-            {expandedGroups[product.id] && (
+            {(expandedGroups[product.id] || collapsed) && (
               <div className="nav-group-children">
                 {product.children.map((feature: any) => {
                   if (feature.children) {
@@ -169,6 +180,7 @@ function Sidebar() {
                         <div 
                           className={`nav-item ${isAnyChildActive ? 'parent-active' : ''}`}
                           onClick={(e) => toggleFeatureExpand(feature.id, e)}
+                          title={collapsed ? feature.title : undefined}
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -180,13 +192,13 @@ function Sidebar() {
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span className="nav-item-icon">{feature.icon}</span>
-                            <span className="nav-item-text">{feature.title}</span>
+                            {!collapsed && <span className="nav-item-text">{feature.title}</span>}
                           </div>
-                          <span>
+                          {!collapsed && <span>
                             {isFeatureExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                          </span>
+                          </span>}
                         </div>
-                        {isFeatureExpanded && (
+                        {(isFeatureExpanded || collapsed) && (
                           <div className="nav-submenu-children" style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
                             {feature.children.map((child: any) => {
                               const isActive = location.pathname === child.path;
@@ -195,10 +207,11 @@ function Sidebar() {
                                   key={child.id} 
                                   className={`nav-item ${isActive ? 'active' : ''}`}
                                   onClick={() => navigate(child.path)}
-                                  style={{ paddingLeft: '12px' }}
+                                  title={collapsed ? child.title : undefined}
+                                  style={collapsed ? undefined : { paddingLeft: '12px' }}
                                 >
                                   <span className="nav-item-icon">{child.icon}</span>
-                                  <span className="nav-item-text">{child.title}</span>
+                                  {!collapsed && <span className="nav-item-text">{child.title}</span>}
                                 </div>
                               );
                             })}
@@ -214,10 +227,11 @@ function Sidebar() {
                         key={feature.id} 
                         className={`nav-item ${isActive ? 'active' : ''}`}
                         onClick={() => navigate(feature.path)}
+                        title={collapsed ? feature.title : undefined}
                         style={{ marginBottom: '4px' }}
                       >
                         <span className="nav-item-icon">{feature.icon}</span>
-                        <span className="nav-item-text">{feature.title}</span>
+                        {!collapsed && <span className="nav-item-text">{feature.title}</span>}
                       </div>
                     );
                   }
@@ -253,7 +267,16 @@ function IframeViewer({ url, lang }: { url: string; lang: string }) {
 function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => void }) {
   const location = useLocation();
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('portal_sidebar_collapsed') === 'true');
   const t = portalI18n[lang as keyof typeof portalI18n] || portalI18n.zh;
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('portal_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
   
   // Find matching URL for iframe dynamically, resolving nested levels
   let currentIframeUrl = '';
@@ -293,7 +316,7 @@ function AppLayout({ lang, setLang }: { lang: string; setLang: (l: string) => vo
 
   return (
     <div className="app-container">
-      <Sidebar />
+      <Sidebar collapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
       <div className="main-content">
         <div className="top-header">
           <div className="breadcrumb-simple" style={{ fontWeight: 500 }}>
