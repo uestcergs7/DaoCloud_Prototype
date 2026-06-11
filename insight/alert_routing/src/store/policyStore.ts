@@ -1,5 +1,54 @@
 import { create } from 'zustand';
 import { Policy } from '../../shared/types';
+import { cloneMockPolicies } from '../data/mockPolicies';
+
+const STATIC_POLICIES_KEY = 'alert_routing_mock_policies';
+
+let useStaticPolicies = false;
+
+const clonePolicies = (policies: Policy[]): Policy[] => JSON.parse(JSON.stringify(policies));
+
+const loadStaticPolicies = (): Policy[] => {
+  const saved = localStorage.getItem(STATIC_POLICIES_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    } catch {
+      localStorage.removeItem(STATIC_POLICIES_KEY);
+    }
+  }
+
+  const seeded = cloneMockPolicies();
+  localStorage.setItem(STATIC_POLICIES_KEY, JSON.stringify(seeded));
+  return seeded;
+};
+
+const saveStaticPolicies = (policies: Policy[]) => {
+  localStorage.setItem(STATIC_POLICIES_KEY, JSON.stringify(clonePolicies(policies)));
+};
+
+const createPolicyId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `policy-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const removePolicyAndChildren = (policies: Policy[], id: string): Policy[] => {
+  const idsToRemove = new Set<string>();
+  const collect = (policyId: string) => {
+    idsToRemove.add(policyId);
+    policies
+      .filter(policy => policy.parentId === policyId)
+      .forEach(child => collect(child.id));
+  };
+
+  collect(id);
+  return policies.filter(policy => !idsToRemove.has(policy.id));
+};
 
 // Helper function to build tree from flat list
 const buildPolicyTree = (flatPolicies: Policy[]): Policy[] => {
@@ -63,14 +112,40 @@ export const usePolicyStore = create<PolicyStore>((set, get) => ({
       const data = await res.json();
       const flatPolicies = Array.isArray(data) ? data : (data.data || []);
       const policies = buildPolicyTree(flatPolicies);
+      useStaticPolicies = false;
       set({ policies, loading: false });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      const flatPolicies = loadStaticPolicies();
+      const policies = buildPolicyTree(flatPolicies);
+      useStaticPolicies = true;
+      set({ policies, loading: false, error: null });
     }
   },
 
   createPolicy: async (policy) => {
     set({ loading: true, error: null });
+    if (useStaticPolicies) {
+      const flatPolicies = loadStaticPolicies();
+      const parentId = policy.parentId ?? flatPolicies.find(p => p.isDefault)?.id ?? null;
+      const newPolicy: Policy = {
+        id: createPolicyId(),
+        name: policy.name || 'New Policy',
+        enabled: policy.enabled ?? true,
+        matchers: policy.matchers ?? [],
+        actions: policy.actions ?? [],
+        grouping: policy.grouping,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        children: [],
+        ...policy,
+        parentId,
+      };
+      const updated = [...flatPolicies, newPolicy];
+      saveStaticPolicies(updated);
+      set({ policies: buildPolicyTree(updated), loading: false });
+      return newPolicy.id;
+    }
+
     try {
       const res = await fetch('/api/policies', {
         method: 'POST',
@@ -92,6 +167,20 @@ export const usePolicyStore = create<PolicyStore>((set, get) => ({
 
   updatePolicy: async (id, updates) => {
     set({ loading: true, error: null });
+    if (useStaticPolicies) {
+      const flatPolicies = loadStaticPolicies();
+      const updated = flatPolicies.map(policy => {
+        if (policy.id !== id) return policy;
+        const sanitizedUpdates = policy.isDefault
+          ? { ...updates, isDefault: policy.isDefault, parentId: policy.parentId }
+          : updates;
+        return { ...policy, ...sanitizedUpdates };
+      });
+      saveStaticPolicies(updated);
+      set({ policies: buildPolicyTree(updated), loading: false });
+      return;
+    }
+
     try {
       const res = await fetch(`/api/policies/${id}`, {
         method: 'PUT',
@@ -111,6 +200,20 @@ export const usePolicyStore = create<PolicyStore>((set, get) => ({
 
   deletePolicy: async (id) => {
     set({ loading: true, error: null });
+    if (useStaticPolicies) {
+      const flatPolicies = loadStaticPolicies();
+      const target = flatPolicies.find(policy => policy.id === id);
+      if (!target || target.isDefault) {
+        const error = new Error('Policy not found or cannot be deleted');
+        set({ error: error.message, loading: false });
+        throw error;
+      }
+      const updated = removePolicyAndChildren(flatPolicies, id);
+      saveStaticPolicies(updated);
+      set({ policies: buildPolicyTree(updated), loading: false });
+      return;
+    }
+
     try {
       const res = await fetch(`/api/policies/${id}`, {
         method: 'DELETE',
@@ -133,6 +236,22 @@ export const usePolicyStore = create<PolicyStore>((set, get) => ({
     //     return { policies: state.policies }; 
     // });
 
+    if (useStaticPolicies) {
+      const flatPolicies = loadStaticPolicies();
+      const order = new Map(orderedIds.map((id, index) => [id, index]));
+      const updated = [...flatPolicies].sort((a, b) => {
+        const aOrder = order.get(a.id);
+        const bOrder = order.get(b.id);
+        if (aOrder === undefined && bOrder === undefined) return 0;
+        if (aOrder === undefined) return 1;
+        if (bOrder === undefined) return -1;
+        return aOrder - bOrder;
+      });
+      saveStaticPolicies(updated);
+      set({ policies: buildPolicyTree(updated) });
+      return;
+    }
+
     try {
       const res = await fetch('/api/policies/reorder', {
         method: 'POST',
@@ -149,6 +268,13 @@ export const usePolicyStore = create<PolicyStore>((set, get) => ({
 
   savePolicyTree: async (policies) => {
     set({ loading: true, error: null });
+    if (useStaticPolicies) {
+      const flatPolicies = clonePolicies(policies).map(policy => ({ ...policy, children: [] }));
+      saveStaticPolicies(flatPolicies);
+      set({ policies: buildPolicyTree(flatPolicies), loading: false });
+      return;
+    }
+
     try {
       const res = await fetch('/api/policies/save-tree', {
         method: 'POST',
